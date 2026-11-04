@@ -170,23 +170,11 @@ public class GlobalConfiguration extends ConfigurationPart {
     public UnsupportedSettings unsupportedSettings;
 
     public class UnsupportedSettings extends ConfigurationPart {
-        @Comment("This setting allows for exploits related to end portals, for example sand duping")
-        public boolean allowUnsafeEndPortalTeleportation = false;
-        @Comment("This setting controls the ability to enable dupes related to tripwires.")
-        public boolean skipTripwireHookPlacementValidation = false;
-        @Comment("This setting controls if players should be able to break bedrock, end portals and other intended to be permanent blocks.")
-        public boolean allowPermanentBlockBreakExploits = false;
-        @Comment("This setting controls if player should be able to use TNT duplication, but this also allows duplicating carpet, rails and potentially other items")
-        public boolean allowPistonDuplication = false;
         public boolean performUsernameValidation = true;
-        @Comment("This setting controls if players should be able to create headless pistons.")
-        public boolean allowHeadlessPistons = false;
         @Comment("This setting controls if the vanilla damage tick should be skipped if damage was blocked via a shield.")
         public boolean skipVanillaDamageTickWhenShieldBlocked = false;
         @Comment("This setting controls what compression format is used for region files.")
         public CompressionFormat compressionFormat = CompressionFormat.ZLIB;
-        @Comment("This setting controls if equipment should be updated when handling certain player actions.")
-        public boolean updateEquipmentOnPlayerActions = true;
         @Comment("This setting controls what item data components don't need to be sanitized in oversized item obfuscation. Adding them re-enables exploits, but may be needed for certain resource packs. (Expected: minecraft:container, minecraft:charged_projectiles and minecraft:bundle_contents)")
         public OversizedItemComponentSanitizer.AssetOversizedItemComponentSanitizerConfiguration oversizedItemComponentSanitizer = new OversizedItemComponentSanitizer.AssetOversizedItemComponentSanitizerConfiguration(Set.of());
 

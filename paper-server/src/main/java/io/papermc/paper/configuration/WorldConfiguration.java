@@ -465,7 +465,6 @@ public class WorldConfiguration extends ConfigurationPart {
 
     public class Fixes extends ConfigurationPart {
         public boolean fixItemsMergingThroughWalls = false;
-        public boolean disableUnloadedChunkEnderpearlExploit = false;
         public boolean preventTntFromMovingInWater = false;
         public boolean splitOverstackedLoot = true;
         public IntOr.Disabled fallingBlockHeightNerf = IntOr.Disabled.DISABLED;
@@ -475,7 +474,6 @@ public class WorldConfiguration extends ConfigurationPart {
     public UnsupportedSettings unsupportedSettings;
 
     public class UnsupportedSettings extends ConfigurationPart {
-        public boolean fixInvulnerableEndCrystalExploit = true;
         public boolean disableWorldTickingWhenEmpty = false;
     }
 

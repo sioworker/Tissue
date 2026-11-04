@@ -40,11 +40,6 @@ public class CraftAdvancement implements org.bukkit.advancement.Advancement {
         return this.handle.value().display().map(d -> d.paper).orElse(null);
     }
 
-    @Deprecated
-    public AdvancementDisplay getDisplay0() { // May be called by plugins via Commodore
-        return this.handle.value().display().map(CraftAdvancementDisplay::new).orElse(null);
-    }
-
     @Override
     public net.kyori.adventure.text.Component displayName() {
         return io.papermc.paper.adventure.PaperAdventure.asAdventure(net.minecraft.advancements.Advancement.name(this.handle));

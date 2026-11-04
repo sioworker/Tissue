@@ -98,7 +98,6 @@ public final class CraftMagicNumbers implements UnsafeValues {
     public static final CraftMagicNumbers INSTANCE = new CraftMagicNumbers();
     public static final boolean DISABLE_OLD_API_SUPPORT = Boolean.getBoolean("paper.disableOldApiSupport"); // Paper
 
-    private final Commodore commodore = new Commodore();
 
     private CraftMagicNumbers() {}
 
@@ -218,10 +217,6 @@ public final class CraftMagicNumbers implements UnsafeValues {
 
     public static byte toLegacyData(BlockState data) {
         return CraftLegacy.toLegacyData(data);
-    }
-
-    public Commodore getCommodore() {
-        return this.commodore;
     }
 
     @Override
@@ -390,19 +385,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
 
     @Override
     public byte[] processClass(PluginDescriptionFile pdf, String path, byte[] clazz) {
-        // Paper start
-        if (DISABLE_OLD_API_SUPPORT) {
-            // Make sure we still go through our reflection rewriting if needed
-            return io.papermc.paper.pluginremap.reflect.ReflectionRemapper.processClass(clazz);
-        }
-        // Paper end
-        try {
-            clazz = this.commodore.convert(clazz, pdf.getName(), ApiVersion.getOrCreateVersion(pdf.getAPIVersion()), ((CraftServer) Bukkit.getServer()).activeCompatibilities);
-        } catch (Exception ex) {
-            Bukkit.getLogger().log(Level.SEVERE, "Fatal error trying to convert " + pdf.getFullName() + ":" + path, ex);
-        }
-
-        return clazz;
+        return io.papermc.paper.pluginremap.reflect.ReflectionRemapper.processClass(clazz);
     }
 
     @Override

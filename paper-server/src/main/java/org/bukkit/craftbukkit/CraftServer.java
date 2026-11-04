@@ -298,7 +298,6 @@ public final class CraftServer implements Server {
     public boolean ignoreVanillaPermissions = false;
     private final List<CraftPlayer> playerView;
     public int reloadCount;
-    public Set<String> activeCompatibilities = Collections.emptySet();
     private final io.papermc.paper.datapack.PaperDatapackManager datapackManager;
     public static Exception excessiveVelEx;
     private final io.papermc.paper.logging.SysoutCatcher sysoutCatcher = new io.papermc.paper.logging.SysoutCatcher();
@@ -475,8 +474,6 @@ public final class CraftServer implements Server {
         TicketType.PLUGIN_TYPE_TIMEOUT = this.configuration.getInt("chunk-gc.period-in-ticks");
         this.minimumAPI = ApiVersion.getOrCreateVersion(this.configuration.getString("settings.minimum-api"));
         this.loadIcon();
-        this.loadCompatibilities();
-        CraftMagicNumbers.INSTANCE.getCommodore().updateReroute(activeCompatibilities::contains);
 
         // Set map color cache
         if (this.configuration.getBoolean("settings.use-map-color-cache")) {
@@ -520,34 +517,6 @@ public final class CraftServer implements Server {
             this.commandsConfiguration.save(this.getCommandsConfigFile());
         } catch (IOException ex) {
             Logger.getLogger(CraftServer.class.getName()).log(Level.SEVERE, "Could not save " + this.getCommandsConfigFile(), ex);
-        }
-    }
-
-    private void loadCompatibilities() {
-        if (true) return; // Paper - Big nope
-        ConfigurationSection compatibilities = this.configuration.getConfigurationSection("settings.compatibility");
-        if (compatibilities == null) {
-            this.activeCompatibilities = Collections.emptySet();
-            return;
-        }
-
-        this.activeCompatibilities = compatibilities
-                .getKeys(false)
-                .stream()
-                .filter(compatibilities::getBoolean)
-                .collect(Collectors.toSet());
-
-        if (!this.activeCompatibilities.isEmpty()) {
-            this.logger.info("Using following compatibilities: `" + Joiner.on("`, `").join(this.activeCompatibilities) + "`, this will affect performance and other plugins behavior.");
-            this.logger.info("Only use when necessary and prefer updating plugins if possible.");
-        }
-
-        if (this.activeCompatibilities.contains("enum-compatibility-mode")) {
-            this.getLogger().warning("Loading plugins in enum compatibility mode. This will affect plugin performance. Use only as a transition period or when absolutely necessary.");
-        } else if (System.getProperty("RemoveEnumBanner") == null) {
-            // TODO 2024-06-16: Remove in newer version
-            this.getLogger().info("*** This version of Spigot contains changes to some enums. If you notice that plugins no longer work after updating, please report this to the developers of those plugins first. ***");
-            this.getLogger().info("*** If you cannot update those plugins, you can try setting `settings.compatibility.enum-compatibility-mode` to `true` in `bukkit.yml`. ***");
         }
     }
 
@@ -970,8 +939,6 @@ public final class CraftServer implements Server {
         this.printSaveWarning = false;
         this.console.autosavePeriod = this.configuration.getInt("ticks-per.autosave");
         this.loadIcon();
-        this.loadCompatibilities();
-        CraftMagicNumbers.INSTANCE.getCommodore().updateReroute(activeCompatibilities::contains);
 
         try {
             this.playerList.getIpBans().load();

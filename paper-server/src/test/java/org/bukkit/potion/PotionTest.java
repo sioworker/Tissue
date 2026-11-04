@@ -1,7 +1,6 @@
 package org.bukkit.potion;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import org.bukkit.craftbukkit.legacy.FieldRename;
 import org.bukkit.craftbukkit.potion.CraftPotionEffectType;
 import org.bukkit.support.environment.AllFeatures;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,7 @@ public class PotionTest {
 
             assertNotNull(bukkit, "No Bukkit type for " + reference.key());
 
-            PotionEffectType byName = FieldRename.getByName_PotionEffectType(bukkit.getName());
+            PotionEffectType byName = PotionEffectType.getByName(bukkit.getName());
             assertEquals(bukkit, byName, "Same type not returned by name " + reference.key());
         });
     }

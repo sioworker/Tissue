@@ -49,7 +49,7 @@ public class PaperPlayerLoginConnection extends ReadablePlayerCookieConnectionIm
 
     @Override
     public @org.jspecify.annotations.Nullable InetSocketAddress getHAProxyAddress() {
-        return this.packetListener.connection.haProxyAddress instanceof final InetSocketAddress inetSocketAddress ? inetSocketAddress : null;
+        return null; // Tissue - no proxy support
     }
 
     @Override

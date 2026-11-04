@@ -874,13 +874,7 @@ public final class CraftServer implements Server {
 
     @Override
     public long getConnectionThrottle() {
-        // Spigot start - Automatically set connection throttle for bungee configurations
-        if (org.spigotmc.SpigotConfig.bungee || io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled) { // Paper - Add Velocity IP Forwarding Support
-            return -1;
-        } else {
-            return this.configuration.getInt("settings.connection-throttle");
-        }
-        // Spigot end
+        return this.configuration.getInt("settings.connection-throttle");
     }
 
     @Override
@@ -1927,7 +1921,7 @@ public final class CraftServer implements Server {
         }
         NameAndId nameAndId;
         // Only fetch an online UUID in online mode
-        if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode()) {
+        if (org.bukkit.Bukkit.getOnlineMode()) {
             nameAndId = console.services().nameToIdCache().get(name).orElse(null);
         } else {
             // Make an OfflinePlayer using an offline mode UUID since the name has no profile
@@ -1946,7 +1940,7 @@ public final class CraftServer implements Server {
         if (result == null) {
             NameAndId profile = null;
             // Only fetch an online UUID in online mode
-            if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode()) { // Paper - Add setting for proxy online mode status
+            if (org.bukkit.Bukkit.getOnlineMode()) { // Paper - Add setting for proxy online mode status
                 // This is potentially blocking :(
                 profile = this.console.services().nameToIdCache().get(name).orElse(null);
             }

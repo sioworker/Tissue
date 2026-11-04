@@ -216,7 +216,7 @@ public class CraftPlayerProfile implements PlayerProfile, SharedPlayerProfile {
 
     @Override
     public boolean completeFromCache() {
-        return completeFromCache(false, GlobalConfiguration.get().proxies.isProxyOnlineMode());
+        return completeFromCache(false, org.bukkit.Bukkit.getOnlineMode());
     }
 
     public boolean completeFromCache(boolean onlineMode) {
@@ -275,7 +275,7 @@ public class CraftPlayerProfile implements PlayerProfile, SharedPlayerProfile {
     }
 
     public boolean complete(boolean textures) {
-        return complete(textures, GlobalConfiguration.get().proxies.isProxyOnlineMode());
+        return complete(textures, org.bukkit.Bukkit.getOnlineMode());
     }
 
     public boolean complete(boolean textures, boolean onlineMode) {

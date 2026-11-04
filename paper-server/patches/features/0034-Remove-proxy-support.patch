@@ -1,0 +1,407 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: sioworker <332519909+sioworker@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 20:59:12 +0100
+Subject: [PATCH] Remove proxy support
+
+
+diff --git a/net/minecraft/network/Connection.java b/net/minecraft/network/Connection.java
+index 19ec939529eb638bdc4d7fd9260f161fae118314..064ce32c1671cd0e43ab9ebdc91269e262c0b8ce 100644
+--- a/net/minecraft/network/Connection.java
++++ b/net/minecraft/network/Connection.java
+@@ -69,8 +69,6 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+     public Channel channel;
+     public SocketAddress address;
+     // Spigot start
+-    public java.util.UUID spoofedUUID;
+-    public com.mojang.authlib.properties.Property[] spoofedProfile;
+     public boolean preparing = true;
+     // Spigot end
+     private volatile @Nullable PacketListener disconnectListener;
+@@ -118,7 +116,6 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+         this.stopReadingPackets = true;
+     }
+     // Paper end - packet limiter
+-    @Nullable public SocketAddress haProxyAddress; // Paper - Add API to get player's proxy address
+     public java.util.@Nullable Optional<net.minecraft.network.chat.Component> legacySavedLoginEventResultOverride; // Paper - playerloginevent
+     public boolean handledLegacyLoginEvent; // Paper - playerloginevent
+     public net.minecraft.server.level.@Nullable ServerPlayer savedPlayerForLegacyEvents; // Paper - playerloginevent & PlayerSpawnLocationEvent
+diff --git a/net/minecraft/server/dedicated/DedicatedServer.java b/net/minecraft/server/dedicated/DedicatedServer.java
+index eb06d8f012684845146429832e977e6c1ddcd62b..10306d7b43c518779d3422af8ab1ee0cff43f7f6 100644
+--- a/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -280,16 +280,9 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         // Paper start - Unix domain socket support
+         java.net.SocketAddress bindAddress;
+         if (this.getLocalIp().startsWith("unix:")) {
+-            if (!io.netty.channel.epoll.Epoll.isAvailable()) {
+-                LOGGER.error("**** INVALID CONFIGURATION!");
+-                LOGGER.error("You are trying to use a Unix domain socket but you're not on a supported OS.");
+-                return false;
+-            } else if (!io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled && !org.spigotmc.SpigotConfig.bungee) {
+-                LOGGER.error("**** INVALID CONFIGURATION!");
+-                LOGGER.error("Unix domain sockets require IPs to be forwarded from a proxy.");
+-                return false;
+-            }
+-            bindAddress = new io.netty.channel.unix.DomainSocketAddress(this.getLocalIp().substring("unix:".length()));
++            LOGGER.error("**** INVALID CONFIGURATION!");
++            LOGGER.error("Unix domain sockets require IPs to be forwarded from a proxy, and Tissue has no proxy support.");
++            return false;
+         } else {
+         InetAddress inetAddress = null;
+         if (!this.getLocalIp().isEmpty()) {
+@@ -321,24 +314,10 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         this.server.enablePlugins(org.bukkit.plugin.PluginLoadOrder.STARTUP);
+         // CraftBukkit end
+ 
+-        // Paper start - Add Velocity IP Forwarding Support
+-        boolean usingProxy = org.spigotmc.SpigotConfig.bungee || io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled;
+-        String proxyFlavor = (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled) ? "Velocity" : "BungeeCord";
+-        String proxyLink = (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled) ? "https://docs.papermc.io/velocity/security" : "http://www.spigotmc.org/wiki/firewall-guide/";
+-        // Paper end - Add Velocity IP Forwarding Support
+         if (!this.usesAuthentication()) {
+             LOGGER.warn("**** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!");
+             LOGGER.warn("The server will make no attempt to authenticate usernames. Beware.");
+-            // Spigot start
+-            // Paper start - Add Velocity IP Forwarding Support
+-            if (usingProxy) {
+-                LOGGER.warn("Whilst this makes it possible to use {}, unless access to your server is properly restricted, it also opens up the ability for hackers to connect with any username they choose.", proxyFlavor);
+-                LOGGER.warn("Please see {} for further information.", proxyLink);
+-                // Paper end - Add Velocity IP Forwarding Support
+-            } else {
+-                LOGGER.warn("While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.");
+-            }
+-            // Spigot end
++            LOGGER.warn("While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.");
+             LOGGER.warn("To change this, set \"online-mode\" to \"true\" in the server.properties file.");
+         }
+ 
+@@ -766,7 +745,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         DedicatedServerProperties properties = this.getProperties();
+         // Paper start - Add setting for proxy online mode status
+         return properties.enforceSecureProfile
+-            && io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode()
++            && org.bukkit.Bukkit.getOnlineMode()
+             && this.services.canValidateProfileKeys();
+         // Paper end - Add setting for proxy online mode status
+     }
+diff --git a/net/minecraft/server/network/ServerConnectionListener.java b/net/minecraft/server/network/ServerConnectionListener.java
+index 33e1cdb00d648c992af03a976899253141314b27..6eddc2a5241048128fad720e103311d161cc0df1 100644
+--- a/net/minecraft/server/network/ServerConnectionListener.java
++++ b/net/minecraft/server/network/ServerConnectionListener.java
+@@ -70,11 +70,6 @@ public class ServerConnectionListener {
+         // Paper end - Unix domain socket support
+         synchronized (this.channels) {
+             EventLoopGroupHolder eventLoopGroupHolder = EventLoopGroupHolder.remote(address, this.server.useNativeTransport()); // Paper - Unix domain socket support
+-            // Paper start - Warn people with console access that HAProxy is in use.
+-            if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.proxyProtocol) {
+-                LOGGER.warn("Using HAProxy, please ensure the server port is adequately firewalled.");
+-            }
+-            // Paper end - Warn people with console access that HAProxy is in use.
+             // Paper start - Use Velocity cipher
+             ServerConnectionListener.LOGGER.info("Paper: Using " + com.velocitypowered.natives.util.Natives.compress.getLoadedVariant() + " compression from Velocity.");
+             ServerConnectionListener.LOGGER.info("Paper: Using " + com.velocitypowered.natives.util.Natives.cipher.getLoadedVariant() + " cipher from Velocity.");
+@@ -104,35 +99,6 @@ public class ServerConnectionListener {
+                                     Connection connection = (Connection)(rateLimitPacketsPerSecond > 0
+                                         ? new RateKickingConnection(rateLimitPacketsPerSecond)
+                                         : new Connection(PacketFlow.SERVERBOUND));
+-                                    // Paper start - Add support for Proxy Protocol
+-                                    if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.proxyProtocol) {
+-                                        channel.pipeline().addAfter("timeout", "haproxy-decoder", new io.netty.handler.codec.haproxy.HAProxyMessageDecoder());
+-                                        channel.pipeline().addAfter("haproxy-decoder", "haproxy-handler", new ChannelInboundHandlerAdapter() {
+-                                            @Override
+-                                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+-                                                if (msg instanceof io.netty.handler.codec.haproxy.HAProxyMessage message) {
+-                                                    if (message.command() == io.netty.handler.codec.haproxy.HAProxyCommand.PROXY) {
+-                                                        String realaddress = message.sourceAddress();
+-                                                        int realport = message.sourcePort();
+-
+-                                                        SocketAddress socketaddr = new java.net.InetSocketAddress(realaddress, realport);
+-
+-                                                        Connection connection = (Connection) channel.pipeline().get("packet_handler");
+-                                                        connection.address = socketaddr;
+-                                                        // Paper start - Add API to get player's proxy address
+-                                                        final String proxyAddress = message.destinationAddress();
+-                                                        final int proxyPort = message.destinationPort();
+-
+-                                                        connection.haProxyAddress = new java.net.InetSocketAddress(proxyAddress, proxyPort);
+-                                                        // Paper end - Add API to get player's proxy address
+-                                                    }
+-                                                } else {
+-                                                    super.channelRead(ctx, msg);
+-                                                }
+-                                            }
+-                                        });
+-                                    }
+-                                    // Paper end - Add support for proxy protocol
+                                     // ServerConnectionListener.this.connections.add(connection); // Paper - prevent blocking on adding a new connection while the server is ticking
+                                     ServerConnectionListener.this.pending.add(connection); // Paper - prevent blocking on adding a new connection while the server is ticking
+                                     connection.configurePacketHandler(channelPipeline);
+diff --git a/net/minecraft/server/network/ServerHandshakePacketListenerImpl.java b/net/minecraft/server/network/ServerHandshakePacketListenerImpl.java
+index c180ee8e811bebdcbe542ddd1cb059c1a0ae2335..a9aaeebf297adf22d5097cc84b28a821387d9b89 100644
+--- a/net/minecraft/server/network/ServerHandshakePacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerHandshakePacketListenerImpl.java
+@@ -15,15 +15,11 @@ import net.minecraft.server.MinecraftServer;
+ public class ServerHandshakePacketListenerImpl implements ServerHandshakePacketListener {
+     private static final Component IGNORE_STATUS_REASON = Component.translatable("disconnect.ignoring_status_request");
+     // Spigot start
+-    private static final com.google.gson.Gson gson = new com.google.gson.Gson();
+-    static final java.util.regex.Pattern HOST_PATTERN = java.util.regex.Pattern.compile("[0-9a-f\\.:]{0,45}");
+-    static final java.util.regex.Pattern PROP_PATTERN = java.util.regex.Pattern.compile("\\w{0,16}");
+     // Spigot end
+     // Paper start - Connection throttle
+     private static final java.util.Map<java.net.InetAddress, Long> throttleTracker = new java.util.HashMap<>();
+     private static int throttleCounter = 0;
+     // Paper end - Connection throttle
+-    private static final boolean BYPASS_HOSTCHECK = Boolean.getBoolean("Paper.bypassHostCheck"); // Paper
+     private final MinecraftServer server;
+     private final Connection connection;
+ 
+@@ -115,66 +111,6 @@ public class ServerHandshakePacketListenerImpl implements ServerHandshakePacketL
+             this.connection.disconnect(component);
+         } else {
+             this.connection.setupInboundProtocol(LoginProtocols.SERVERBOUND, new ServerLoginPacketListenerImpl(this.server, this.connection, transferred));
+-            // Paper start - PlayerHandshakeEvent
+-            boolean proxyLogicEnabled = org.spigotmc.SpigotConfig.bungee;
+-            boolean handledByEvent = false;
+-            // Try and handle the handshake through the event
+-            if (com.destroystokyo.paper.event.player.PlayerHandshakeEvent.getHandlerList().getRegisteredListeners().length != 0) { // Hello? Can you hear me?
+-                java.net.SocketAddress socketAddress = this.connection.address;
+-                String hostnameOfRemote = socketAddress instanceof java.net.InetSocketAddress ? ((java.net.InetSocketAddress) socketAddress).getHostString() : java.net.InetAddress.getLoopbackAddress().getHostAddress();
+-                com.destroystokyo.paper.event.player.PlayerHandshakeEvent event = new com.destroystokyo.paper.event.player.PlayerHandshakeEvent(packet.hostName(), hostnameOfRemote, !proxyLogicEnabled);
+-                if (event.callEvent()) {
+-                    // If we've failed somehow, let the client know so and go no further.
+-                    if (event.isFailed()) {
+-                        Component message = io.papermc.paper.adventure.PaperAdventure.asVanilla(event.failMessage());
+-                        this.connection.send(new ClientboundLoginDisconnectPacket(message));
+-                        this.connection.disconnect(message);
+-                        return;
+-                    }
+-
+-                    if (event.getServerHostname() != null) {
+-                        // change hostname
+-                        packet = new ClientIntentionPacket(
+-                            packet.protocolVersion(),
+-                            event.getServerHostname(),
+-                            packet.port(),
+-                            packet.intention()
+-                        );
+-                        this.connection.hostname = event.getServerHostname();
+-                    }
+-                    if (event.getSocketAddressHostname() != null) this.connection.address = new java.net.InetSocketAddress(event.getSocketAddressHostname(), socketAddress instanceof java.net.InetSocketAddress ? ((java.net.InetSocketAddress) socketAddress).getPort() : 0);
+-                    this.connection.spoofedUUID = event.getUniqueId();
+-                    this.connection.spoofedProfile = gson.fromJson(event.getPropertiesJson(), com.mojang.authlib.properties.Property[].class);
+-                    handledByEvent = true; // Hooray, we did it!
+-                }
+-            }
+-            // Paper end
+-            // Spigot start
+-            String[] split = packet.hostName().split("\00");
+-            if (!handledByEvent && proxyLogicEnabled) { // Paper
+-                // if (org.spigotmc.SpigotConfig.bungee) { // Paper - comment out, we check above!
+-                if ((split.length == 3 || split.length == 4) && (ServerHandshakePacketListenerImpl.BYPASS_HOSTCHECK || ServerHandshakePacketListenerImpl.HOST_PATTERN.matcher(split[1]).matches())) { // Paper - Add bypass host check
+-                    // Paper start - Unix domain socket support
+-                    java.net.SocketAddress socketAddress = this.connection.getRemoteAddress();
+-                    this.connection.hostname = split[0];
+-                    this.connection.address = new java.net.InetSocketAddress(split[1], socketAddress instanceof java.net.InetSocketAddress ? ((java.net.InetSocketAddress) socketAddress).getPort() : 0);
+-                    // Paper end - Unix domain socket support
+-                    this.connection.spoofedUUID = com.mojang.util.UndashedUuid.fromStringLenient( split[2] );
+-                } else {
+-                    Component message = Component.literal("If you wish to use IP forwarding, please enable it in your BungeeCord config as well!");
+-                    this.connection.send(new ClientboundLoginDisconnectPacket(message));
+-                    this.connection.disconnect(message);
+-                    return;
+-                }
+-                if (split.length == 4) {
+-                    this.connection.spoofedProfile = ServerHandshakePacketListenerImpl.gson.fromJson(split[3], com.mojang.authlib.properties.Property[].class);
+-                }
+-            } else if ((split.length == 3 || split.length == 4) && (ServerHandshakePacketListenerImpl.HOST_PATTERN.matcher(split[1]).matches())) {
+-                Component message = Component.literal("Unknown data in login hostname, did you forget to enable BungeeCord in spigot.yml?");
+-                this.connection.send(new ClientboundLoginDisconnectPacket(message));
+-                this.connection.disconnect(message);
+-            }
+-            // Spigot end
+         }
+     }
+ 
+diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+index 51a29ab542136e67741be10bbc5c6377715a207c..1b41b4a6d5fd73159143819d2f07a49577914290 100644
+--- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+@@ -68,7 +68,6 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+     private final String serverId = "";
+     public final boolean transferred; // Paper
+     public boolean iKnowThisMayNotBeTheBestIdeaButPleaseDisableUsernameValidation = false; // Paper - username validation overriding
+-    private int velocityLoginMessageId = -1; // Paper - Add Velocity IP Forwarding Support
+     public java.util.@Nullable UUID requestedUuid; // Paper
+     private final io.papermc.paper.connection.PaperPlayerLoginConnection paperLoginConnection; // Paper - Config API
+     private volatile boolean disconnecting = false; // Paper - Fix disconnect still ticking login
+@@ -153,7 +152,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+     public void handleHello(ServerboundHelloPacket packet) {
+         Validate.validState(this.state == ServerLoginPacketListenerImpl.State.HELLO, "Unexpected hello packet");
+         // Paper start - Validate usernames
+-        if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode()
++        if (org.bukkit.Bukkit.getOnlineMode()
+             && io.papermc.paper.configuration.GlobalConfiguration.get().unsupportedSettings.performUsernameValidation
+             && !this.iKnowThisMayNotBeTheBestIdeaButPleaseDisableUsernameValidation) {
+             Validate.validState(StringUtil.isReasonablePlayerName(packet.name()), "Invalid characters in username");
+@@ -169,16 +168,6 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+                 this.state = ServerLoginPacketListenerImpl.State.KEY;
+                 this.connection.send(new ClientboundHelloPacket("", this.server.getKeyPair().getPublic().getEncoded(), this.challenge, true));
+             } else {
+-                // Paper start - Add Velocity IP Forwarding Support
+-                if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled) {
+-                    this.velocityLoginMessageId = java.util.concurrent.ThreadLocalRandom.current().nextInt();
+-                    net.minecraft.network.FriendlyByteBuf buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+-                    buf.writeByte(com.destroystokyo.paper.proxy.VelocityProxy.MAX_SUPPORTED_FORWARDING_VERSION);
+-                    net.minecraft.network.protocol.login.ClientboundCustomQueryPacket packet1 = new net.minecraft.network.protocol.login.ClientboundCustomQueryPacket(this.velocityLoginMessageId, new net.minecraft.network.protocol.login.ClientboundCustomQueryPacket.PlayerInfoChannelPayload(com.destroystokyo.paper.proxy.VelocityProxy.PLAYER_INFO_CHANNEL, buf));
+-                    this.connection.send(packet1);
+-                    return;
+-                }
+-                // Paper end - Add Velocity IP Forwarding Support
+                 // CraftBukkit start
+                 // Paper start - Cache authenticator threads
+                 authenticatorPool.execute(() -> {
+@@ -309,12 +298,6 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+ 
+     // CraftBukkit start
+     private GameProfile callPlayerPreLoginEvents(GameProfile gameprofile) throws Exception { // Paper - Add more fields to AsyncPlayerPreLoginEvent
+-        // Paper start - Add Velocity IP Forwarding Support
+-        if (ServerLoginPacketListenerImpl.this.velocityLoginMessageId == -1 && io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled) {
+-            this.disconnect("This server requires you to connect with Velocity.");
+-            return gameprofile;
+-        }
+-        // Paper end - Add Velocity IP Forwarding Support
+         String playerName = gameprofile.name();
+         java.net.InetAddress address = ((java.net.InetSocketAddress) this.connection.getRemoteAddress()).getAddress();
+         java.util.UUID uniqueId = gameprofile.id();
+@@ -360,7 +343,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+ 
+     @Override
+     public void handleCustomQueryPacket(ServerboundCustomQueryAnswerPacket packet) {
+-        // Paper start - Add Velocity IP Forwarding Support
++        // Paper start - release query payload buffers
+         try {
+             this.handleCustomQueryPacket0(packet);
+         } finally {
+@@ -371,49 +354,6 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+         }
+     }
+     private void handleCustomQueryPacket0(ServerboundCustomQueryAnswerPacket packet) {
+-        if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled && packet.transactionId() == this.velocityLoginMessageId) {
+-            ServerboundCustomQueryAnswerPacket.QueryAnswerPayload payload = (ServerboundCustomQueryAnswerPacket.QueryAnswerPayload)packet.payload();
+-            if (payload == null) {
+-                this.disconnect("This server requires you to connect with Velocity.");
+-                return;
+-            }
+-
+-            net.minecraft.network.FriendlyByteBuf buf = payload.buffer;
+-            if (!com.destroystokyo.paper.proxy.VelocityProxy.checkIntegrity(buf)) {
+-                this.disconnect("Unable to verify player details");
+-                return;
+-            }
+-
+-            int version = buf.readVarInt();
+-            if (version > com.destroystokyo.paper.proxy.VelocityProxy.MAX_SUPPORTED_FORWARDING_VERSION) {
+-                throw new IllegalStateException("Unsupported forwarding version " + version + ", wanted upto " + com.destroystokyo.paper.proxy.VelocityProxy.MAX_SUPPORTED_FORWARDING_VERSION);
+-            }
+-
+-            java.net.SocketAddress listening = this.connection.getRemoteAddress();
+-            int port = 0;
+-            if (listening instanceof java.net.InetSocketAddress) {
+-                port = ((java.net.InetSocketAddress) listening).getPort();
+-            }
+-            this.connection.address = new java.net.InetSocketAddress(com.destroystokyo.paper.proxy.VelocityProxy.readAddress(buf), port);
+-
+-            this.authenticatedProfile = com.destroystokyo.paper.proxy.VelocityProxy.createProfile(buf);
+-
+-            //TODO Update handling for lazy sessions, might not even have to do anything?
+-
+-            // Proceed with login
+-            authenticatorPool.execute(() -> {
+-                try {
+-                    final GameProfile gameprofile = this.callPlayerPreLoginEvents(this.authenticatedProfile);
+-                    ServerLoginPacketListenerImpl.LOGGER.info("UUID of player {} is {}", gameprofile.name(), gameprofile.id());
+-                    ServerLoginPacketListenerImpl.this.startClientVerification(gameprofile);
+-                } catch (Exception ex) {
+-                    disconnect("Failed to verify username!");
+-                    server.server.getLogger().log(java.util.logging.Level.WARNING, "Exception verifying " + this.authenticatedProfile.name(), ex);
+-                }
+-            });
+-            return;
+-        }
+-        // Paper end - Add Velocity IP Forwarding Support
+         this.disconnect(ServerCommonPacketListenerImpl.DISCONNECT_UNEXPECTED_QUERY);
+     }
+ 
+@@ -444,23 +384,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+ 
+     // Spigot start
+     protected GameProfile createOfflineProfile(String s) {
+-        java.util.UUID uuid;
+-        if (this.connection.spoofedUUID != null) {
+-            uuid = this.connection.spoofedUUID;
+-        } else {
+-            uuid = UUIDUtil.createOfflinePlayerUUID(s);
+-        }
+-
+-        final var props = com.google.common.collect.ImmutableMultimap.<String, com.mojang.authlib.properties.Property>builder();
+-
+-        if (this.connection.spoofedProfile != null) {
+-            for (com.mojang.authlib.properties.Property property : this.connection.spoofedProfile) {
+-                if (!ServerHandshakePacketListenerImpl.PROP_PATTERN.matcher(property.name()).matches()) continue;
+-                props.put(property.name(), property);
+-            }
+-        }
+-
+-        return new GameProfile(uuid, s, new com.mojang.authlib.properties.PropertyMap(props.build()));
++        return new GameProfile(UUIDUtil.createOfflinePlayerUUID(s), s);
+     }
+     // Spigot end
+ 
+diff --git a/net/minecraft/server/players/CachedUserNameToIdResolver.java b/net/minecraft/server/players/CachedUserNameToIdResolver.java
+index 6d3f496881492ac67465746984d6ef8302750305..33583069db6b2c929eb3d8b3707922b0bce471ac 100644
+--- a/net/minecraft/server/players/CachedUserNameToIdResolver.java
++++ b/net/minecraft/server/players/CachedUserNameToIdResolver.java
+@@ -71,14 +71,14 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
+             return this.createUnknownProfile(name);
+         } else {
+             final boolean shouldLookup = !org.apache.commons.lang3.StringUtils.isBlank(name)  // Paper - Don't lookup a profile with a blank name
+-                && io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode(); // Paper - Add setting for proxy online mode status
++                && org.bukkit.Bukkit.getOnlineMode(); // Paper - Add setting for proxy online mode status
+             Optional<NameAndId> optional = shouldLookup ? profileRepository.findProfileByName(name).map(NameAndId::new) : Optional.empty(); // Paper - Don't lookup a profile with a blank name
+             return optional.isEmpty() ? this.createUnknownProfile(name) : optional;
+         }
+     }
+ 
+     private Optional<NameAndId> createUnknownProfile(String name) {
+-        return !io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode() ? Optional.of(NameAndId.createOffline(name)) : Optional.empty(); // Paper - Add setting for proxy online mode status
++        return !org.bukkit.Bukkit.getOnlineMode() ? Optional.of(NameAndId.createOffline(name)) : Optional.empty(); // Paper - Add setting for proxy online mode status
+     }
+ 
+     @Override
+diff --git a/net/minecraft/server/players/OldUsersConverter.java b/net/minecraft/server/players/OldUsersConverter.java
+index 1e4f9aef0c98470b3297192bc282158e69d37230..21887016eacb081e23aaf4674af9a084eb006d39 100644
+--- a/net/minecraft/server/players/OldUsersConverter.java
++++ b/net/minecraft/server/players/OldUsersConverter.java
+@@ -51,7 +51,7 @@ public class OldUsersConverter {
+     private static void lookupPlayers(MinecraftServer server, Collection<String> names, ProfileLookupCallback callback) {
+         String[] strings = names.stream().filter(name -> !StringUtil.isNullOrEmpty(name)).toArray(String[]::new);
+         if (server.usesAuthentication() ||
+-            (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode())) { // Spigot: bungee = online mode, for now.  // Paper - Add setting for proxy online mode status
++            (org.bukkit.Bukkit.getOnlineMode())) { // Spigot: bungee = online mode, for now.  // Paper - Add setting for proxy online mode status
+             server.services().profileRepository().findProfilesByNames(strings, callback);
+         } else {
+             for (String string : strings) {
+diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
+index dec9dd8e42f90ccf7e5e3ad945e459d07159250d..44af8e545f906bc19dff9c641f7070bd98c407d6 100644
+--- a/net/minecraft/server/players/PlayerList.java
++++ b/net/minecraft/server/players/PlayerList.java
+@@ -575,7 +575,7 @@ public abstract class PlayerList {
+         Set<ServerPlayer> set = Sets.newIdentityHashSet();
+ 
+         for (ServerPlayer serverPlayer : this.players) {
+-            if (serverPlayer.getUUID().equals(profileId) || (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode() && serverPlayer.getGameProfile().name().equalsIgnoreCase(profile.name()))) { // Paper - validate usernames
++            if (serverPlayer.getUUID().equals(profileId) || (org.bukkit.Bukkit.getOnlineMode() && serverPlayer.getGameProfile().name().equalsIgnoreCase(profile.name()))) { // Paper - validate usernames
+                 set.add(serverPlayer);
+             }
+         }

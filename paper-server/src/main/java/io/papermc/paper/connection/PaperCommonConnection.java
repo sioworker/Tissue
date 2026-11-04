@@ -97,7 +97,7 @@ public abstract class PaperCommonConnection<T extends ServerCommonPacketListener
 
     @Override
     public @Nullable InetSocketAddress getHAProxyAddress() {
-        return this.handle.connection.haProxyAddress instanceof final InetSocketAddress inetSocketAddress ? inetSocketAddress : null;
+        return null; // Tissue - no proxy support
     }
 
     @Override

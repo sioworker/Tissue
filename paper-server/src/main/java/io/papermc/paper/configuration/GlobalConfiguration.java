@@ -105,43 +105,6 @@ public class GlobalConfiguration extends ConfigurationPart {
         public boolean enableImmediately = false;
     }
 
-    public Proxies proxies;
-
-    public class Proxies extends ConfigurationPart {
-        public BungeeCord bungeeCord;
-
-        public class BungeeCord extends ConfigurationPart {
-            public boolean onlineMode = true;
-        }
-
-        public Velocity velocity;
-
-        public class Velocity extends ConfigurationPart {
-            public boolean enabled = false;
-            public boolean onlineMode = true;
-            public String secret = "";
-
-            @PostProcess
-            private void postProcess() {
-                if (!this.enabled) return;
-
-                final String environmentSourcedVelocitySecret = System.getenv("PAPER_VELOCITY_SECRET");
-                if (environmentSourcedVelocitySecret != null && !environmentSourcedVelocitySecret.isEmpty()) {
-                    this.secret = environmentSourcedVelocitySecret;
-                }
-
-                if (this.secret.isEmpty()) {
-                    LOGGER.error("Velocity is enabled, but no secret key was specified. A secret key is required. Disabling velocity...");
-                    this.enabled = false;
-                }
-            }
-        }
-        public boolean proxyProtocol = false;
-        public boolean isProxyOnlineMode() {
-            return org.bukkit.Bukkit.getOnlineMode() || (org.spigotmc.SpigotConfig.bungee && this.bungeeCord.onlineMode) || (this.velocity.enabled && this.velocity.onlineMode);
-        }
-    }
-
     public Console console;
 
     public class Console extends ConfigurationPart {

@@ -332,9 +332,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     // Paper start - Add API to get player's proxy address
     @Override
     public @Nullable InetSocketAddress getHAProxyAddress() {
-        if (this.getHandle().connection == null) return null;
-
-        return this.getHandle().connection.connection.haProxyAddress instanceof final InetSocketAddress inetSocketAddress ? inetSocketAddress : null;
+        return null; // Tissue - no proxy support
     }
     // Paper end - Add API to get player's proxy address
     @Override

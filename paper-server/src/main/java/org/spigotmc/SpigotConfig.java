@@ -186,15 +186,6 @@ public class SpigotConfig {
         SpigotConfig.commands.put("restart", new RestartCommand("restart"));
     }
 
-    public static boolean bungee;
-    private static void bungee() {
-        if (SpigotConfig.version < 4) {
-            SpigotConfig.set("settings.bungeecord", false);
-            System.out.println("Outdated config, disabling BungeeCord support!");
-        }
-        SpigotConfig.bungee = SpigotConfig.getBoolean("settings.bungeecord", false);
-    }
-
     private static void nettyThreads() {
         int count = SpigotConfig.getInt("settings.netty-threads", 4);
         System.setProperty("io.netty.eventLoopThreads", Integer.toString(count));

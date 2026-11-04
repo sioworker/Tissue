@@ -2374,67 +2374,45 @@ index 9e88d83b31129cc853afe60d841838852a33fc45..935aacd607bb1960bc5f01b3fd025603
          NONE("none"),
          BLOCK("block"),
 diff --git a/net/minecraft/world/level/block/RedStoneWireBlock.java b/net/minecraft/world/level/block/RedStoneWireBlock.java
-index d7ff98f4ecadd37f22d0a38d94a5975db60d6285..6d98bc37d88459d1e0a171b52bbff5810d775c38 100644
+index 417e12d3dfabdfce40d6a53d217b86a39defc553..85fdca033fb590df7a3d2351f65b77369720142a 100644
 --- a/net/minecraft/world/level/block/RedStoneWireBlock.java
 +++ b/net/minecraft/world/level/block/RedStoneWireBlock.java
-@@ -264,7 +264,7 @@ public class RedStoneWireBlock extends Block {
-         return state.isFaceSturdy(level, pos, Direction.UP) || state.is(Blocks.HOPPER);
-     }
- 
--    // Paper start - Optimize redstone
-+    // Paper start - Optimize redstone (Eigencraft)
-     // The bulk of the new functionality is found in RedstoneWireTurbo.java
-     io.papermc.paper.redstone.RedstoneWireTurbo turbo = new io.papermc.paper.redstone.RedstoneWireTurbo(this);
- 
-@@ -346,7 +346,13 @@ public class RedStoneWireBlock extends Block {
+@@ -292,7 +292,7 @@ public class RedStoneWireBlock extends Block {
      @Override
      protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
          if (!oldState.is(state.getBlock()) && !level.isClientSide()) {
--            this.updateSurroundingRedstone(level, pos, state, null, true); // Paper - Optimize redstone
-+            // Paper start - optimize redstone - replace call to updatePowerStrength
-+            if (level.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT) {
-+                level.getWireHandler().onWireAdded(pos, state); // Alternate Current
-+            } else {
-+                this.updateSurroundingRedstone(level, pos, state, null, true); // Vanilla/Eigencraft
-+            }
-+            // Paper end - optimize redstone
+-            this.updatePowerStrength(level, pos, state, null, true);
++            level.getWireHandler().onWireAdded(pos, state); // Paper - optimize redstone (Alternate Current)
  
              for (Direction direction : Direction.Plane.VERTICAL) {
                  level.updateNeighborsAt(pos.relative(direction), this);
-@@ -363,7 +369,13 @@ public class RedStoneWireBlock extends Block {
+@@ -309,7 +309,7 @@ public class RedStoneWireBlock extends Block {
                  level.updateNeighborsAt(pos.relative(direction), this);
              }
  
--            this.updateSurroundingRedstone(level, pos, state, null, false); // Paper - Optimize redstone
-+            // Paper start - optimize redstone - replace call to updatePowerStrength
-+            if (level.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT) {
-+                level.getWireHandler().onWireRemoved(pos, state); // Alternate Current
-+            } else {
-+                this.updateSurroundingRedstone(level, pos, state, null, false); // Vanilla/Eigencraft
-+            }
-+            // Paper end - optimize redstone
+-            this.updatePowerStrength(level, pos, state, null, false);
++            level.getWireHandler().onWireRemoved(pos, state); // Paper - optimize redstone (Alternate Current)
              this.updateNeighborsOfNeighboringWires(level, pos);
          }
      }
-@@ -386,9 +398,15 @@ public class RedStoneWireBlock extends Block {
+@@ -332,14 +332,7 @@ public class RedStoneWireBlock extends Block {
      @Override
      protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
          if (!level.isClientSide()) {
-+            // Paper start - optimize redstone (Alternate Current)
-+            // Alternate Current handles breaking of redstone wires in the WireHandler.
-+            if (level.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT) {
-+                level.getWireHandler().onWireUpdated(pos, state, orientation);
-+            } else
-+                // Paper end - optimize redstone (Alternate Current)
-             if (neighborBlock != this || !useExperimentalEvaluator(level)) {
-                 if (state.canSurvive(level, pos)) {
--                    this.updateSurroundingRedstone(level, pos, state, orientation, false); // Paper - Optimize redstone
-+                    this.updateSurroundingRedstone(level, pos, state, orientation, false); // Paper - Optimize redstone (Eigencraft)
-                 } else {
-                     dropResources(state, level, pos);
-                     level.removeBlock(pos, false);
+-            if (neighborBlock != this || !useExperimentalEvaluator(level)) {
+-                if (state.canSurvive(level, pos)) {
+-                    this.updatePowerStrength(level, pos, state, orientation, false);
+-                } else {
+-                    dropResources(state, level, pos);
+-                    level.removeBlock(pos, false);
+-                }
+-            }
++            level.getWireHandler().onWireUpdated(pos, state, orientation); // Paper - optimize redstone (Alternate Current) - handles breaking of wires too
+         }
+     }
+ 
 diff --git a/net/minecraft/world/level/redstone/ExperimentalRedstoneUtils.java b/net/minecraft/world/level/redstone/ExperimentalRedstoneUtils.java
-index 413d6b66a7e368ebb590064b0d0dd47b64c68659..05e99653bb1f3b392be86f9fa9814b87ca301bca 100644
+index 413d6b66a7e368ebb590064b0d0dd47b64c68659..63adad498bb28f469133d61fb5cddf8ba23b48a5 100644
 --- a/net/minecraft/world/level/redstone/ExperimentalRedstoneUtils.java
 +++ b/net/minecraft/world/level/redstone/ExperimentalRedstoneUtils.java
 @@ -16,6 +16,11 @@ public class ExperimentalRedstoneUtils {
@@ -2442,7 +2420,7 @@ index 413d6b66a7e368ebb590064b0d0dd47b64c68659..05e99653bb1f3b392be86f9fa9814b87
                  orientation = orientation.withFront(front);
              }
 +            // Paper start - Optimize redstone (Alternate Current) - use default front instead of random
-+            else if (level.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT) {
++            else {
 +                orientation = orientation.withFront(Direction.WEST);
 +            }
 +            // Paper end - Optimize redstone (Alternate Current)

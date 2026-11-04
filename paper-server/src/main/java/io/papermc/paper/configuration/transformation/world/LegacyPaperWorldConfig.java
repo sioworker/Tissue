@@ -111,13 +111,7 @@ public final class LegacyPaperWorldConfig {
                 newPath[newPath.length - 1] = itemName;
                 return newPath;
             }).build())
-            .addVersion(27, ConfigurationTransformation.builder().addAction(path("use-faster-eigencraft-redstone"), (path, value) -> {
-                final WorldConfiguration.Misc.RedstoneImplementation redstoneImplementation = value.getBoolean(false) ? WorldConfiguration.Misc.RedstoneImplementation.EIGENCRAFT : WorldConfiguration.Misc.RedstoneImplementation.VANILLA;
-                value.set(redstoneImplementation);
-                final Object[] newPath = path.array();
-                newPath[newPath.length - 1] = "redstone-implementation";
-                return newPath;
-            }).build())
+            .addVersion(27, ConfigurationTransformation.builder().addAction(path("use-faster-eigencraft-redstone"), TransformAction.remove()).build())
             .build();
     }
 

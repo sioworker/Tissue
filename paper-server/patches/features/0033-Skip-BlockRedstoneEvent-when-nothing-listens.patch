@@ -1,0 +1,166 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: sioworker <332519909+sioworker@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 20:55:06 +0100
+Subject: [PATCH] Skip BlockRedstoneEvent when nothing listens
+
+
+diff --git a/alternate/current/wire/LevelHelper.java b/alternate/current/wire/LevelHelper.java
+index ff663d3089627e75221aa128aff4bf5cc459addb..4bdb0e09d9f422de645bb4a4d31f0c083696a07f 100644
+--- a/alternate/current/wire/LevelHelper.java
++++ b/alternate/current/wire/LevelHelper.java
+@@ -14,6 +14,7 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
+ class LevelHelper {
+ 
+     static int doRedstoneEvent(ServerLevel level, BlockPos pos, int prevPower, int newPower) {
++        if (!org.bukkit.craftbukkit.event.CraftEventFactory.hasRedstoneListeners()) return newPower; // Tissue - skip event when nothing listens
+         BlockRedstoneEvent event = new BlockRedstoneEvent(CraftBlock.at(level, pos), prevPower, newPower);
+         level.getCraftServer().getPluginManager().callEvent(event);
+ 
+diff --git a/net/minecraft/world/level/block/ComparatorBlock.java b/net/minecraft/world/level/block/ComparatorBlock.java
+index 7e87d56cd42f27c115b575b9acf2ce9ac0953af8..5a31d7cf3a3e29f96e8416ec28835fc3247def37 100644
+--- a/net/minecraft/world/level/block/ComparatorBlock.java
++++ b/net/minecraft/world/level/block/ComparatorBlock.java
+@@ -168,14 +168,14 @@ public class ComparatorBlock extends DiodeBlock implements EntityBlock {
+             boolean poweredValue = state.getValue(POWERED);
+             if (poweredValue && !shouldTurnOn) {
+                 // CraftBukkit start
+-                if (org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, 15, 0).getNewCurrent() != 0) {
++                if (org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, 15, 0) != 0) {
+                     return;
+                 }
+                 // CraftBukkit end
+                 level.setBlock(pos, state.setValue(POWERED, false), Block.UPDATE_CLIENTS);
+             } else if (!poweredValue && shouldTurnOn) {
+                 // CraftBukkit start
+-                if (org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, 0, 15).getNewCurrent() != 15) {
++                if (org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, 0, 15) != 15) {
+                     return;
+                 }
+                 // CraftBukkit end
+diff --git a/net/minecraft/world/level/block/DaylightDetectorBlock.java b/net/minecraft/world/level/block/DaylightDetectorBlock.java
+index 7a428ff04cdcff26f7c9582c388542ecc618506a..3ced07580066d7b1b77aff40ef7f7c5274bcfd6f 100644
+--- a/net/minecraft/world/level/block/DaylightDetectorBlock.java
++++ b/net/minecraft/world/level/block/DaylightDetectorBlock.java
+@@ -71,7 +71,7 @@ public class DaylightDetectorBlock extends BaseEntityBlock {
+ 
+         i = Mth.clamp(i, 0, 15);
+         if (state.getValue(POWER) != i) {
+-            i = org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, state.getValue(DaylightDetectorBlock.POWER), i).getNewCurrent(); // CraftBukkit - Call BlockRedstoneEvent
++            i = org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, state.getValue(DaylightDetectorBlock.POWER), i); // CraftBukkit - Call BlockRedstoneEvent
+             level.setBlock(pos, state.setValue(POWER, i), Block.UPDATE_ALL);
+         }
+     }
+diff --git a/net/minecraft/world/level/block/DiodeBlock.java b/net/minecraft/world/level/block/DiodeBlock.java
+index a750e2d7f6c5ac7561c8b06870e022b07875c587..cc331a03d9513677316b6fd9ac29aa98e8c80139 100644
+--- a/net/minecraft/world/level/block/DiodeBlock.java
++++ b/net/minecraft/world/level/block/DiodeBlock.java
+@@ -57,14 +57,14 @@ public abstract class DiodeBlock extends HorizontalDirectionalBlock {
+             boolean shouldTurnOn = this.shouldTurnOn(level, pos, state);
+             if (poweredValue && !shouldTurnOn) {
+                 // CraftBukkit start
+-                if (org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, 15, 0).getNewCurrent() != 0) {
++                if (org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, 15, 0) != 0) {
+                     return;
+                 }
+                 // CraftBukkit end
+                 level.setBlock(pos, state.setValue(POWERED, false), Block.UPDATE_CLIENTS);
+             } else if (!poweredValue) {
+                 // CraftBukkit start
+-                if (org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, 0, 15).getNewCurrent() != 15) {
++                if (org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, 0, 15) != 15) {
+                     return;
+                 }
+                 // CraftBukkit end
+diff --git a/net/minecraft/world/level/block/LecternBlock.java b/net/minecraft/world/level/block/LecternBlock.java
+index 52b9bd310c731c407fc4264559084debec81d3d9..dc59f29bf54900ce8da067a3def9706eab088e44 100644
+--- a/net/minecraft/world/level/block/LecternBlock.java
++++ b/net/minecraft/world/level/block/LecternBlock.java
+@@ -177,9 +177,7 @@ public class LecternBlock extends BaseEntityBlock {
+         // Paper start - Call BlockRedstoneEvent properly
+         final int currentRedstoneLevel = state.getValue(LecternBlock.POWERED) ? 15 : 0, targetRedstoneLevel = powered ? 15 : 0;
+         if (currentRedstoneLevel != targetRedstoneLevel) {
+-            final org.bukkit.event.block.BlockRedstoneEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, currentRedstoneLevel, targetRedstoneLevel);
+-
+-            if (event.getNewCurrent() != targetRedstoneLevel) {
++            if (org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, currentRedstoneLevel, targetRedstoneLevel) != targetRedstoneLevel) {
+                 return;
+             }
+         }
+diff --git a/net/minecraft/world/level/block/ObserverBlock.java b/net/minecraft/world/level/block/ObserverBlock.java
+index 3c12d8e23f20b666b0005e597ba2e803c02d5d78..0e7f62903b9b7353d0ca8c4c41d3a55a7b3ffa66 100644
+--- a/net/minecraft/world/level/block/ObserverBlock.java
++++ b/net/minecraft/world/level/block/ObserverBlock.java
+@@ -51,14 +51,14 @@ public class ObserverBlock extends DirectionalBlock {
+     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+         if (state.getValue(POWERED)) {
+             // CraftBukkit start
+-            if (org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, 15, 0).getNewCurrent() != 0) {
++            if (org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, 15, 0) != 0) {
+                 return;
+             }
+             // CraftBukkit end
+             level.setBlock(pos, state.setValue(POWERED, false), Block.UPDATE_CLIENTS);
+         } else {
+             // CraftBukkit start
+-            if (org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, 0, 15).getNewCurrent() != 15) {
++            if (org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, 0, 15) != 15) {
+                 return;
+             }
+             // CraftBukkit end
+diff --git a/net/minecraft/world/level/block/PoweredRailBlock.java b/net/minecraft/world/level/block/PoweredRailBlock.java
+index 1d1a2e183624ebae22b966ab59a174e941f139c0..23f380ad7e0bf007a4333385a7082a1b35415be8 100644
+--- a/net/minecraft/world/level/block/PoweredRailBlock.java
++++ b/net/minecraft/world/level/block/PoweredRailBlock.java
+@@ -129,7 +129,7 @@ public class PoweredRailBlock extends BaseRailBlock {
+         if (flag != poweredValue) {
+             // CraftBukkit start
+             int power = flag ? 15 : 0;
+-            int newPower = org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, power, 15 - power).getNewCurrent();
++            int newPower = org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, power, 15 - power);
+             if (newPower == power) {
+                 return;
+             }
+diff --git a/net/minecraft/world/level/block/RedstoneLampBlock.java b/net/minecraft/world/level/block/RedstoneLampBlock.java
+index 5d56412d616eaaadd4d98ac1e94c8f554e7a4232..45dbe1671c83e0ae2634ea64c2aab16c33c5b2b3 100644
+--- a/net/minecraft/world/level/block/RedstoneLampBlock.java
++++ b/net/minecraft/world/level/block/RedstoneLampBlock.java
+@@ -41,7 +41,7 @@ public class RedstoneLampBlock extends Block {
+                     level.scheduleTick(pos, this, 4);
+                 } else {
+                     // CraftBukkit start
+-                    if (org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, 0, 15).getNewCurrent() != 15) {
++                    if (org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, 0, 15) != 15) {
+                         return;
+                     }
+                     // CraftBukkit end
+@@ -55,7 +55,7 @@ public class RedstoneLampBlock extends Block {
+     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+         if (state.getValue(LIT) && !level.hasNeighborSignal(pos)) {
+             // CraftBukkit start
+-            if (org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, 15, 0).getNewCurrent() != 0) {
++            if (org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, 15, 0) != 0) {
+                 return;
+             }
+             // CraftBukkit end
+diff --git a/net/minecraft/world/level/block/entity/ContainerOpenersCounter.java b/net/minecraft/world/level/block/entity/ContainerOpenersCounter.java
+index 4f3b6a32fe4e791aab05aa9e553ec935e3cd5e6b..4046d5118f2f70a010bf6c7760c4511bf95eea31 100644
+--- a/net/minecraft/world/level/block/entity/ContainerOpenersCounter.java
++++ b/net/minecraft/world/level/block/entity/ContainerOpenersCounter.java
+@@ -48,7 +48,7 @@ public abstract class ContainerOpenersCounter {
+             int newPower = Math.max(0, Math.min(15, this.openCount));
+ 
+             if (oldPower != newPower) {
+-                org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, oldPower, newPower);
++                org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, oldPower, newPower);
+             }
+         }
+         // CraftBukkit end
+@@ -73,7 +73,7 @@ public abstract class ContainerOpenersCounter {
+             int newPower = Math.max(0, Math.min(15, this.openCount));
+ 
+             if (oldPower != newPower) {
+-                org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(level, pos, oldPower, newPower);
++                org.bukkit.craftbukkit.event.CraftEventFactory.redstoneChange(level, pos, oldPower, newPower);
+             }
+         }
+         // CraftBukkit end

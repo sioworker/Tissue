@@ -1513,8 +1513,21 @@ public class CraftEventFactory {
     public static boolean callBinaryRedstoneChange(LevelAccessor level, BlockPos pos, boolean willBePowered) {
         int oldCurrent = willBePowered ? Redstone.SIGNAL_MIN : Redstone.SIGNAL_MAX;
         int newCurrent = willBePowered ? Redstone.SIGNAL_MAX : Redstone.SIGNAL_MIN;
-        return callRedstoneChange(level, pos, oldCurrent, newCurrent).getNewCurrent() == newCurrent;
+        return redstoneChange(level, pos, oldCurrent, newCurrent) == newCurrent;
     }
+
+    // Tissue start - skip BlockRedstoneEvent allocation and dispatch when nothing listens
+    public static boolean hasRedstoneListeners() {
+        return BlockRedstoneEvent.getHandlerList().getRegisteredListeners().length != 0;
+    }
+
+    public static int redstoneChange(LevelAccessor level, BlockPos pos, int oldCurrent, int newCurrent) {
+        if (!hasRedstoneListeners()) {
+            return newCurrent;
+        }
+        return callRedstoneChange(level, pos, oldCurrent, newCurrent).getNewCurrent();
+    }
+    // Tissue end - skip BlockRedstoneEvent allocation and dispatch when nothing listens
 
     public static BlockRedstoneEvent callRedstoneChange(LevelAccessor level, BlockPos pos, int oldCurrent, int newCurrent) {
         BlockRedstoneEvent event = new BlockRedstoneEvent(CraftBlock.at(level, pos), oldCurrent, newCurrent); // todo normalize newCurrent change outcome

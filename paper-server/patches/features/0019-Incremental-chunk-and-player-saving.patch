@@ -5,7 +5,7 @@ Subject: [PATCH] Incremental chunk and player saving
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index a9751f4bda862ef597ba39700b83c434f7a457d9..90e23b96ed3fc5a84f52e6f94ad40bdb028fedf7 100644
+index b1ee66c671362cf99425d029045fe3f9c2713bd0..47010e8463da6ed2d785f2ef21cdf5bf88d477ee 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -972,7 +972,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa

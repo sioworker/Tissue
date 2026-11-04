@@ -523,7 +523,6 @@ public class WorldConfiguration extends ConfigurationPart {
     public class Misc extends ConfigurationPart {
         public boolean updatePathfindingOnBlockUpdate = true;
         public boolean showSignClickCommandFailureMsgsToPlayer = false;
-        public RedstoneImplementation redstoneImplementation = RedstoneImplementation.VANILLA;
         public AlternateCurrentUpdateOrder alternateCurrentUpdateOrder = AlternateCurrentUpdateOrder.HORIZONTAL_FIRST_OUTWARD;
         public boolean disableEndCredits = false;
         public DoubleOr.Default maxLeashDistance = DoubleOr.Default.USE_DEFAULT;
@@ -531,10 +530,6 @@ public class WorldConfiguration extends ConfigurationPart {
         public boolean disableRelativeProjectileVelocity = false;
         public boolean legacyEnderPearlBehavior = false;
         public boolean allowRemoteEnderDragonRespawning = false;
-
-        public enum RedstoneImplementation {
-            VANILLA, EIGENCRAFT, ALTERNATE_CURRENT
-        }
 
         public enum AlternateCurrentUpdateOrder {
         	HORIZONTAL_FIRST_OUTWARD, HORIZONTAL_FIRST_INWARD, VERTICAL_FIRST_OUTWARD, VERTICAL_FIRST_INWARD

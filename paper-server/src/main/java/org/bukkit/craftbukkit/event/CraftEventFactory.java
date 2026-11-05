@@ -949,6 +949,10 @@ public class CraftEventFactory {
             boolean result = world.setBlock(target, state, flags);
             return !checkSetResult || result;
         }
+        if (BlockSpreadEvent.getHandlerList().getRegisteredListeners().length == 0) { // Tissue - skip when nothing listens
+            boolean result = world.setBlock(target, state, flags);
+            return !checkSetResult || result;
+        }
 
         CraftBlockState snapshot = CraftBlockStates.getBlockState(world, target);
         snapshot.setData(state);
@@ -1292,6 +1296,10 @@ public class CraftEventFactory {
     }
 
     public static boolean handleBlockGrowEvent(Level world, BlockPos pos, net.minecraft.world.level.block.state.BlockState state, @net.minecraft.world.level.block.Block.UpdateFlags int flags) {
+        if (BlockGrowEvent.getHandlerList().getRegisteredListeners().length == 0) { // Tissue - skip when nothing listens
+            world.setBlock(pos, state, flags);
+            return true;
+        }
         CraftBlockState snapshot = CraftBlockStates.getBlockState(world, pos);
         snapshot.setData(state);
 
@@ -1933,6 +1941,10 @@ public class CraftEventFactory {
     }
 
     public static boolean handleBlockFormEvent(Level world, BlockPos pos, net.minecraft.world.level.block.state.BlockState state, @net.minecraft.world.level.block.Block.UpdateFlags int flags, @Nullable Entity entity, boolean checkSetResult) {
+        if (BlockFormEvent.getHandlerList().getRegisteredListeners().length == 0) { // Tissue - skip when nothing listens
+            boolean result = world.setBlock(pos, state, flags);
+            return !checkSetResult || result;
+        }
         CraftBlockState snapshot = CraftBlockStates.getBlockState(world, pos);
         snapshot.setData(state);
 

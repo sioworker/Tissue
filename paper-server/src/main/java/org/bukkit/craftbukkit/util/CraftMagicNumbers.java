@@ -452,7 +452,17 @@ public final class CraftMagicNumbers implements UnsafeValues {
 
     @Override
     public com.destroystokyo.paper.util.VersionFetcher getVersionFetcher() {
-        return new com.destroystokyo.paper.PaperVersionFetcher();
+        return new com.destroystokyo.paper.util.VersionFetcher() {
+            @Override
+            public long getCacheTime() {
+                return Long.MAX_VALUE;
+            }
+
+            @Override
+            public net.kyori.adventure.text.Component getVersionMessage() {
+                return net.kyori.adventure.text.Component.empty();
+            }
+        };
     }
 
     @Override

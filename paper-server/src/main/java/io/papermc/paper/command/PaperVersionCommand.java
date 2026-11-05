@@ -1,6 +1,5 @@
 package io.papermc.paper.command;
 
-import com.destroystokyo.paper.util.VersionFetcher;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -45,7 +44,6 @@ public class PaperVersionCommand {
     private static final Component FAILED_TO_FETCH = Component.text("Could not fetch version information!", NamedTextColor.RED);
     private static final Component FETCHING = Component.text("Checking version, please wait...", NamedTextColor.WHITE, TextDecoration.ITALIC);
 
-    private final VersionFetcher versionFetcher = CraftMagicNumbers.INSTANCE.getVersionFetcher();
     private CompletableFuture<ComputedVersion> computedVersion = CompletableFuture.completedFuture(new ComputedVersion(Component.empty(), -1)); // Precompute-- someday move that stuff out of bukkit
 
     public static LiteralCommandNode<CommandSourceStack> create() {
@@ -155,7 +153,7 @@ public class PaperVersionCommand {
             return this.computedVersion;
         }
 
-        if (this.computedVersion.isCompletedExceptionally() || System.currentTimeMillis() - this.computedVersion.resultNow().computedTime() > this.versionFetcher.getCacheTime()) {
+        if (this.computedVersion.isCompletedExceptionally() || this.computedVersion.resultNow().computedTime() < 0) {
             this.computedVersion = this.fetchVersionMessage();
         }
 
@@ -164,11 +162,7 @@ public class PaperVersionCommand {
 
     private CompletableFuture<ComputedVersion> fetchVersionMessage() {
        return CompletableFuture.supplyAsync(() -> {
-           final Component message = Component.textOfChildren(
-               Component.text(Bukkit.getVersionMessage(), NamedTextColor.WHITE),
-               Component.newline(),
-               this.versionFetcher.getVersionMessage()
-           );
+           final Component message = Component.text(Bukkit.getVersionMessage(), NamedTextColor.WHITE);
 
            return new ComputedVersion(
                message.hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))

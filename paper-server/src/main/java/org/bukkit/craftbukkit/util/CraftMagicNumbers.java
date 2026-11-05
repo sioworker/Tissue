@@ -213,8 +213,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
 
     @Override
     public Material fromLegacy(Material material) {
-        Preconditions.checkArgument(material == null || !material.isLegacy(), "Legacy materials are not supported");
-        return material;
+        return material; // no legacy conversion: legacy materials map to no item/block type
     }
 
     @Override

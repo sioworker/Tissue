@@ -10,8 +10,17 @@
 > | Speed (idle MSPT, 1 min avg) | 0.37 ms | 0.30 ms | **−19%** |
 > | RAM (heap after GC) | 213 MB | 195 MB | **−8%** |
 > | RAM (process RSS) | 847 MB | 788 MB | **−7%** |
+> | World generation (chunks/s) | 140 | 169 | **+20%** |
 >
-> Average of 3 runs: fresh world (seed `tissue`), no plugins, no players, Java 25, `-Xms256M -Xmx2G`, each server on its own default config (Tissue ships view-distance 8 / simulation-distance 6). Idle MSPT is close to the noise floor; real gains depend on your world and plugins.
+> Average of 3 runs: fresh world (seed `tissue`), no plugins, no players, Java 25, `-Xms256M -Xmx2G`, each server on its own default config (Tissue ships view-distance 8 / simulation-distance 6). Idle MSPT is close to the noise floor; real gains depend on your world and plugins. World generation: 2401 new chunks on a 24-thread Ryzen AI 9 HX 370 laptop; desktop and server CPUs should gain more. Terrain is bit-for-bit identical to Paper.
+>
+> **What's different from Paper**
+> - **Exploits allowed:** TNT/carpet/rail duping, attribute swapping, headless pistons, bedrock breaking, end portal sand duping, tripwire dupes.
+> - **Removed:** Anti-Xray, BungeeCord/Velocity/HAProxy forwarding, Timings, bStats, the update checker, bundled spark, bundled SQLite/MySQL drivers, legacy (pre-1.13) material support, Commodore bytecode rewriting, plugin remapping and the reflection rewriter.
+> - **Redstone:** Alternate Current is the only redstone wire implementation.
+> - **Events:** hot Bukkit events (block physics, fluid flow, player/vehicle move, air change, pathfinding, block grow/spread/form…) are skipped entirely when no plugin listens.
+> - **World generation:** half the CPU cores go to chunk generation instead of a quarter, and terrain formulas are set up faster for each chunk.
+> - **Lighter defaults:** smaller entity activation ranges, lower mob caps, item/XP merging, slower hopper checks, optimized explosions.
 
 Tissue [![Build Status](https://img.shields.io/github/actions/workflow/status/sioworker/Tissue/build.yml?branch=main)](https://github.com/sioworker/Tissue/actions/workflows/build.yml)
 [![Discord](https://img.shields.io/discord/289587909051416579.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/papermc)

@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: sioworker <332519909+sioworker@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 21:31:34 +0100
+Subject: [PATCH] Lighter default view and simulation distance
+
+
+diff --git a/net/minecraft/server/dedicated/DedicatedServerProperties.java b/net/minecraft/server/dedicated/DedicatedServerProperties.java
+index bbd8f68d166ebd0370f4b39362468fdc7d70f7f0..720012fe329c1210521929028503476172349b98 100644
+--- a/net/minecraft/server/dedicated/DedicatedServerProperties.java
++++ b/net/minecraft/server/dedicated/DedicatedServerProperties.java
+@@ -100,8 +100,8 @@ public class DedicatedServerProperties extends Settings<DedicatedServerPropertie
+     public final long maxTickTime = this.get("max-tick-time", TimeUnit.MINUTES.toMillis(1L));
+     public final int maxChainedNeighborUpdates = this.get("max-chained-neighbor-updates", 1000000);
+     public final int rateLimitPacketsPerSecond = this.get("rate-limit", 0);
+-    public final Settings<DedicatedServerProperties>.MutableValue<Integer> viewDistance = this.getMutable("view-distance", 10);
+-    public final Settings<DedicatedServerProperties>.MutableValue<Integer> simulationDistance = this.getMutable("simulation-distance", 10);
++    public final Settings<DedicatedServerProperties>.MutableValue<Integer> viewDistance = this.getMutable("view-distance", 8);
++    public final Settings<DedicatedServerProperties>.MutableValue<Integer> simulationDistance = this.getMutable("simulation-distance", 6);
+     public final Settings<DedicatedServerProperties>.MutableValue<Integer> maxPlayers = this.getMutable("max-players", 20);
+     public final int networkCompressionThreshold = this.get("network-compression-threshold", 256);
+     public final boolean broadcastRconToOps = this.get("broadcast-rcon-to-ops", true);

@@ -366,7 +366,7 @@ public class WorldConfiguration extends ConfigurationPart {
     public class Environment extends ConfigurationPart {
         public boolean disableThunder = false;
         public boolean disableIceAndSnow = false;
-        public boolean optimizeExplosions = false;
+        public boolean optimizeExplosions = true;
         public boolean disableExplosionKnockback = false;
         public boolean generateFlatBedrock = false;
         public FrostedIce frostedIce;
@@ -447,7 +447,7 @@ public class WorldConfiguration extends ConfigurationPart {
         public boolean allowVehicleCollisions = true;
         public boolean fixClimbingBypassingCrammingRule = false;
         @RequiresSpigotInitialization(MaxEntityCollisionsInitializer.class)
-        public int maxEntityCollisions = 8;
+        public int maxEntityCollisions = 2;
         public boolean allowPlayerCrammingDamage = false;
     }
 
@@ -457,7 +457,7 @@ public class WorldConfiguration extends ConfigurationPart {
         public AutosavePeriod autoSaveInterval = AutosavePeriod.def();
         public int maxAutoSaveChunksPerTick = 24;
         public int fixedChunkInhabitedTime = -1;
-        public boolean preventMovingIntoUnloadedChunks = false;
+        public boolean preventMovingIntoUnloadedChunks = true;
         public Duration delayChunkUnloadsBy = Duration.of("10s");
         public Reference2IntMap<EntityType<?>> entityPerChunkSaveLimit = Util.make(new Reference2IntOpenHashMap<>(BuiltInRegistries.ENTITY_TYPE.size()), map -> {
             map.defaultReturnValue(-1);
@@ -488,7 +488,7 @@ public class WorldConfiguration extends ConfigurationPart {
     public class TickRates extends ConfigurationPart {
         public int grassSpread = 1;
         public int containerUpdate = 1;
-        public int mobSpawner = 1;
+        public int mobSpawner = 2;
         public int wetFarmland = 1;
         public int dryFarmland = 1;
         public Table<EntityType<?>, String, Integer> sensor = Util.make(HashBasedTable.create(), table -> table.put(EntityType.VILLAGER, "secondarypoisensor", 40));

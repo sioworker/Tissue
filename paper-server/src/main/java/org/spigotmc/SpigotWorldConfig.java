@@ -135,13 +135,13 @@ public class SpigotWorldConfig {
 
     public double itemMerge;
     private void itemMerge() {
-        this.itemMerge = this.getDouble("merge-radius.item", 0.5);
+        this.itemMerge = this.getDouble("merge-radius.item", 2.5);
         this.log("Item Merge Radius: " + this.itemMerge);
     }
 
     public double expMerge;
     private void expMerge() {
-        this.expMerge = this.getDouble("merge-radius.exp", -1);
+        this.expMerge = this.getDouble("merge-radius.exp", 3.0);
         this.log("Experience Merge Radius: " + this.expMerge);
     }
 
@@ -184,13 +184,13 @@ public class SpigotWorldConfig {
         this.log("Item Despawn Rate: " + this.itemDespawnRate);
     }
 
-    public int animalActivationRange = 32;
-    public int monsterActivationRange = 32;
-    public int raiderActivationRange = 64;
-    public int miscActivationRange = 16;
-    public int flyingMonsterActivationRange = 32;
-    public int waterActivationRange = 16;
-    public int villagerActivationRange = 32;
+    public int animalActivationRange = 16;
+    public int monsterActivationRange = 24;
+    public int raiderActivationRange = 48;
+    public int miscActivationRange = 8;
+    public int flyingMonsterActivationRange = 24;
+    public int waterActivationRange = 8;
+    public int villagerActivationRange = 16;
     public int wakeUpInactiveAnimals = 4;
     public int wakeUpInactiveAnimalsEvery = 60 * 20;
     public int wakeUpInactiveAnimalsFor = 5 * 20;
@@ -269,7 +269,7 @@ public class SpigotWorldConfig {
         if (SpigotConfig.version < 11) {
             this.set("ticks-per.hopper-check", 1);
         }
-        this.hopperCheck = this.getInt("ticks-per.hopper-check", 1);
+        this.hopperCheck = this.getInt("ticks-per.hopper-check", 8);
         this.hopperAmount = this.getInt("hopper-amount", 1);
         this.hopperCanLoadChunks = this.getBoolean("hopper-can-load-chunks", false);
         this.log("Hopper Transfer: " + this.hopperTransfer + " Hopper Check: " + this.hopperCheck + " Hopper Amount: " + this.hopperAmount + " Hopper Can Load Chunks: " + this.hopperCanLoadChunks);

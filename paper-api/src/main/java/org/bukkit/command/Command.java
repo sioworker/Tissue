@@ -36,11 +36,6 @@ public abstract class Command {
      * @deprecated Timings will be removed in the future
      */
     @Deprecated(forRemoval = true)
-    public co.aikar.timings.Timing timings; // Paper
-    /**
-     * @deprecated Timings will be removed in the future
-     */
-    @Deprecated(forRemoval = true)
     @NotNull public String getTimingName() {return getName();} // Paper
 
     protected Command(@NotNull String name) {

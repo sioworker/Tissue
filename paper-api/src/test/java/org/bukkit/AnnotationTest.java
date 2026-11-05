@@ -50,14 +50,6 @@ public class AnnotationTest {
         // Paper start
         "io/papermc/paper/util/TransformingRandomAccessList",
         "io/papermc/paper/util/TransformingRandomAccessList$TransformedListIterator",
-        // Timings history is broken in terms of nullability due to guavas Function defining that the param is NonNull
-        "co/aikar/timings/TimingHistory$2",
-        "co/aikar/timings/TimingHistory$2$1",
-        "co/aikar/timings/TimingHistory$2$1$1",
-        "co/aikar/timings/TimingHistory$2$1$2",
-        "co/aikar/timings/TimingHistory$3",
-        "co/aikar/timings/TimingHistory$4",
-        "co/aikar/timings/TimingHistoryEntry$1"
         // Paper end
     };
 

@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: sioworker <332519909+sioworker@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 21:12:34 +0100
+Subject: [PATCH] Remove reflection rewriter and mapping helper
+
+
+diff --git a/net/minecraft/network/Connection.java b/net/minecraft/network/Connection.java
+index 064ce32c1671cd0e43ab9ebdc91269e262c0b8ce..1bf6336ef095d362106f9a353540d9b3d158c1f9 100644
+--- a/net/minecraft/network/Connection.java
++++ b/net/minecraft/network/Connection.java
+@@ -245,7 +245,7 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+                                     case DROP:
+                                         return;
+                                     case KICK:
+-                                        String deobfedPacketName = io.papermc.paper.util.ObfHelper.INSTANCE.deobfClassName(check.getName());
++                                        String deobfedPacketName = check.getName();
+ 
+                                         String playerName;
+                                         if (this.packetListener instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl impl) {
+diff --git a/net/minecraft/server/dedicated/DedicatedServer.java b/net/minecraft/server/dedicated/DedicatedServer.java
+index 10306d7b43c518779d3422af8ab1ee0cff43f7f6..1e04767107150ee6da4d53e890842d836c1d3aad 100644
+--- a/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -256,7 +256,6 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         org.spigotmc.SpigotConfig.init((java.io.File) this.options.valueOf("spigot-settings"));
+         org.spigotmc.SpigotConfig.registerCommands();
+         // Spigot end
+-        io.papermc.paper.util.ObfHelper.INSTANCE.getClass(); // Paper - load mappings for stacktrace deobf and etc.
+         // Paper start - initialize global and world-defaults configuration
+         this.paperConfigurations.initializeGlobalConfiguration(this.registryAccess());
+         this.paperConfigurations.initializeWorldDefaultsConfiguration(this.registryAccess());
+diff --git a/net/minecraft/world/entity/ai/behavior/Behavior.java b/net/minecraft/world/entity/ai/behavior/Behavior.java
+index 5b0cadd2544fb2a627822e645ff32fec2e9cfda9..adc1bc41f85bd5bc0b30eaa0a1d8b928adaad1c9 100644
+--- a/net/minecraft/world/entity/ai/behavior/Behavior.java
++++ b/net/minecraft/world/entity/ai/behavior/Behavior.java
+@@ -29,7 +29,7 @@ public abstract class Behavior<E extends LivingEntity> implements BehaviorContro
+         this.maxDuration = maxDuration;
+         this.entryCondition = entryCondition;
+         // Paper start - configurable behavior tick rate and timings
+-        String key = io.papermc.paper.util.MappingEnvironment.reobf() ? io.papermc.paper.util.ObfHelper.INSTANCE.deobfClassName(this.getClass().getName()) : this.getClass().getName();
++        String key = this.getClass().getName();
+         int lastSeparator = key.lastIndexOf('.');
+         if (lastSeparator != -1) {
+             key = key.substring(lastSeparator + 1);
+diff --git a/net/minecraft/world/entity/ai/sensing/Sensor.java b/net/minecraft/world/entity/ai/sensing/Sensor.java
+index 1441f24413b10538e6bdc0f894234d96916c57dc..cb396b06e7e26ecc0090336516730dfc5617af89 100644
+--- a/net/minecraft/world/entity/ai/sensing/Sensor.java
++++ b/net/minecraft/world/entity/ai/sensing/Sensor.java
+@@ -33,7 +33,7 @@ public abstract class Sensor<E extends LivingEntity> {
+ 
+     public Sensor(int scanRate) {
+         // Paper start - configurable sensor tick rate and timings
+-        String key = io.papermc.paper.util.MappingEnvironment.reobf() ? io.papermc.paper.util.ObfHelper.INSTANCE.deobfClassName(this.getClass().getName()) : this.getClass().getName();
++        String key = this.getClass().getName();
+         int lastSeparator = key.lastIndexOf('.');
+         if (lastSeparator != -1) {
+             key = key.substring(lastSeparator + 1);

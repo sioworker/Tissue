@@ -369,7 +369,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
 
     @Override
     public byte[] processClass(PluginDescriptionFile pdf, String path, byte[] clazz) {
-        return io.papermc.paper.pluginremap.reflect.ReflectionRemapper.processClass(clazz);
+        return clazz;
     }
 
     @Override

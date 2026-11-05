@@ -1,0 +1,119 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: sioworker <332519909+sioworker@users.noreply.github.com>
+Date: Thu, 5 Nov 2026 09:55:10 +0100
+Subject: [PATCH] Cut entity tick overhead
+
+
+diff --git a/net/minecraft/core/Holder.java b/net/minecraft/core/Holder.java
+index b66cc9ece297190b46234ae167d3d6c76e9d93e8..f5b374d0c7a440bab62f4481f69ba81d31fa854c 100644
+--- a/net/minecraft/core/Holder.java
++++ b/net/minecraft/core/Holder.java
+@@ -115,6 +115,7 @@ public interface Holder<T> {
+     public static class Reference<T> implements Holder<T> {
+         private final HolderOwner<T> owner;
+         private @Nullable Set<TagKey<T>> tags;
++        private it.unimi.dsi.fastutil.objects.@Nullable ReferenceOpenHashSet<TagKey<T>> rawTags; // Tissue - direct access for is(TagKey)
+         private final Holder.Reference.Type type;
+         private @Nullable ResourceKey<T> key;
+         private @Nullable T value;
+@@ -172,7 +173,13 @@ public interface Holder<T> {
+ 
+         @Override
+         public boolean is(TagKey<T> tagKey) {
+-            return this.boundTags().contains(tagKey);
++            // Tissue start - skip the unmodifiable wrapper, and answer instantly for entries without tags (e.g. the empty fluid)
++            final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<TagKey<T>> raw = this.rawTags;
++            if (raw == null) {
++                return this.boundTags().contains(tagKey);
++            }
++            return !raw.isEmpty() && raw.contains(tagKey);
++            // Tissue end
+         }
+ 
+         @Override
+@@ -227,7 +234,9 @@ public interface Holder<T> {
+         }
+ 
+         void bindTags(Collection<TagKey<T>> tags) {
+-            this.tags = it.unimi.dsi.fastutil.objects.ReferenceSets.unmodifiable(new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(tags)); // Paper - use reference set because TagKey are interned
++            final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<TagKey<T>> raw = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(tags); // Tissue
++            this.tags = it.unimi.dsi.fastutil.objects.ReferenceSets.unmodifiable(raw); // Paper - use reference set because TagKey are interned
++            this.rawTags = raw; // Tissue
+         }
+ 
+         @Override
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index d91a5acf039344f33aaf2edd179e9ab244553858..c75dd11a29db65ce9e08839370c1a3488f55a2d7 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -1320,7 +1320,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+ 
+                 // Paper - improve tick loop - done above
+ 
+-                try (Profiler.Scope scope = Profiler.use(this.createProfiler())) {
++                final net.minecraft.util.profiling.ProfilerFiller tickProfiler = this.createProfiler(); // Tissue start - don't install the no-op profiler; keeps Profiler.get() off the ThreadLocal path
++                try (Profiler.Scope scope = tickProfiler == net.minecraft.util.profiling.InactiveProfiler.INSTANCE ? () -> {} : Profiler.use(tickProfiler)) { // Tissue end
+                     this.processPacketsAndTick(flag);
+                     ProfilerFiller profilerFiller = Profiler.get();
+                     profilerFiller.push("nextTickWait");
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index e728e663b0ec0a38f7a3e2fbc88b5b9c59391d71..13cdff87fa4eb9b125a4ef5703d31388cdde517d 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -2205,12 +2205,23 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+             .findClosestBiome3d(pos, radius, horizontalStep, verticalStep, biomePredicate, this.getChunkSource().randomState().sampler(), this);
+     }
+ 
++    // Tissue start - cache the border; it is fetched from the saved data map on every movement check otherwise
++    private @Nullable WorldBorder cachedWorldBorder;
++    private int cachedWorldBorderModCount = -1;
++
+     @Override
+     public WorldBorder getWorldBorder() {
+-        WorldBorder worldBorder = this.getDataStorage().computeIfAbsent(WorldBorder.TYPE);
+-        worldBorder.applyInitialSettings(this.levelData.getGameTime());
++        final net.minecraft.world.level.storage.DimensionDataStorage storage = this.getDataStorage();
++        WorldBorder worldBorder = this.cachedWorldBorder;
++        if (worldBorder == null || this.cachedWorldBorderModCount != storage.modCount) {
++            worldBorder = storage.computeIfAbsent(WorldBorder.TYPE);
++            worldBorder.applyInitialSettings(this.levelData.getGameTime());
++            this.cachedWorldBorder = worldBorder;
++            this.cachedWorldBorderModCount = storage.modCount;
++        }
+         return worldBorder;
+     }
++    // Tissue end
+ 
+     @Override
+     public RecipeManager recipeAccess() {
+diff --git a/net/minecraft/world/level/storage/DimensionDataStorage.java b/net/minecraft/world/level/storage/DimensionDataStorage.java
+index b932e6236975fd4a755bdbf4b7a958599383f3f8..b3b799f2414547cbe859d108f55ba8f40a9c621e 100644
+--- a/net/minecraft/world/level/storage/DimensionDataStorage.java
++++ b/net/minecraft/world/level/storage/DimensionDataStorage.java
+@@ -54,6 +54,8 @@ public class DimensionDataStorage implements AutoCloseable {
+         return this.dataFolder.resolve(filename + ".dat");
+     }
+ 
++    public int modCount; // Tissue - lets callers cache saved data safely
++
+     public <T extends SavedData> T computeIfAbsent(SavedDataType<T> type) {
+         T savedData = this.get(type);
+         if (savedData != null) {
+@@ -69,7 +71,7 @@ public class DimensionDataStorage implements AutoCloseable {
+         Optional<SavedData> optional = this.cache.get(type);
+         if (optional == null) {
+             optional = Optional.ofNullable(this.readSavedData(type));
+-            this.cache.put(type, optional);
++            this.modCount++; this.cache.put(type, optional);
+         }
+ 
+         return (T)optional.orElse(null);
+@@ -94,7 +96,7 @@ public class DimensionDataStorage implements AutoCloseable {
+     }
+ 
+     public <T extends SavedData> void set(SavedDataType<T> type, T value) {
+-        this.cache.put(type, Optional.of(value));
++        this.modCount++; this.cache.put(type, Optional.of(value));
+         value.setDirty();
+     }
+ 

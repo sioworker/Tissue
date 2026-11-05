@@ -69,9 +69,6 @@ public class PaperClasspathBuilder implements PluginClasspathBuilder {
         }
 
         List<Path> paths = paperLibraryStore.getPaths();
-        if (remap && PluginInitializerManager.instance().pluginRemapper != null) {
-            paths = PluginInitializerManager.instance().pluginRemapper.remapLibraries(paths);
-        }
         return paths;
     }
 }

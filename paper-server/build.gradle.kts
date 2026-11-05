@@ -172,7 +172,6 @@ dependencies {
     testImplementation("org.junit-pioneer:junit-pioneer:2.2.0") // CartesianTest
 
     implementation("net.neoforged:srgutils:1.0.9") // Mappings handling
-    implementation("net.neoforged:AutoRenamingTool:2.0.3") // Remap plugins
 
     // Remap reflection
     val reflectionRewriterVersion = "0.0.3"

@@ -1,4 +1,19 @@
-Paper [![Paper Build Status](https://img.shields.io/github/actions/workflow/status/PaperMC/Paper/build.yml?branch=main)](https://github.com/PaperMC/Paper/actions)
+> [!WARNING]
+> **This is experimental! A lot of plugins will not work!**
+>
+> Tissue is a stripped-down Paper 1.21.11 fork: no legacy/pre-1.13 plugins, no Spigot-mapped plugins, no proxy support, no Timings/bStats/spark, exploits allowed.
+>
+> | | Paper 1.21.11 (build 132) | Tissue | Difference |
+> |---|---|---|---|
+> | File Size | 54.8 MB | 32.8 MB | **−40%** |
+> | Boot (start → "Done") | 6.34 s | 5.74 s | **−9%** |
+> | Speed (idle MSPT, 1 min avg) | 0.37 ms | 0.30 ms | **−19%** |
+> | RAM (heap after GC) | 213 MB | 195 MB | **−8%** |
+> | RAM (process RSS) | 847 MB | 788 MB | **−7%** |
+>
+> Average of 3 runs: fresh world (seed `tissue`), no plugins, no players, Java 25, `-Xms256M -Xmx2G`, each server on its own default config (Tissue ships view-distance 8 / simulation-distance 6). Idle MSPT is close to the noise floor; real gains depend on your world and plugins.
+
+Tissue [![Build Status](https://img.shields.io/github/actions/workflow/status/sioworker/Tissue/build.yml?branch=main)](https://github.com/sioworker/Tissue/actions/workflows/build.yml)
 [![Discord](https://img.shields.io/discord/289587909051416579.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/papermc)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/papermc?label=GitHub%20Sponsors)](https://github.com/sponsors/PaperMC)
 [![Open Collective](https://img.shields.io/opencollective/all/papermc?label=OpenCollective%20Sponsors)](https://opencollective.com/papermc)

@@ -107,6 +107,11 @@ val log4jPlugins = sourceSets.create("log4jPlugins")
 configurations.named(log4jPlugins.compileClasspathConfigurationName) {
     extendsFrom(configurations.compileClasspath.get())
 }
+// parameter-name mappings used by the decompiler; nothing reads them at runtime
+configurations.runtimeClasspath {
+    exclude(group = "io.papermc.parchment.data")
+}
+
 val alsoShade: Configuration by configurations.creating
 
 val runtimeConfiguration by configurations.consumable("runtimeConfiguration") {

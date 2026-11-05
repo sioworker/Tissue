@@ -28,7 +28,6 @@ public interface PluginClasspathBuilder {
      * @param classPathLibrary the library instance to add to this builder
      * @return self
      * @see io.papermc.paper.plugin.loader.library.impl.JarLibrary
-     * @see io.papermc.paper.plugin.loader.library.impl.MavenLibraryResolver
      */
     @Contract("_ -> this")
     PluginClasspathBuilder addLibrary(ClassPathLibrary classPathLibrary);

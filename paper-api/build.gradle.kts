@@ -65,10 +65,7 @@ dependencies {
     apiAndDocs("net.kyori:adventure-text-serializer-legacy")
     apiAndDocs("net.kyori:adventure-text-serializer-plain")
     apiAndDocs("net.kyori:adventure-text-logger-slf4j")
-
-    api("org.apache.maven:maven-resolver-provider:3.9.6") // make API dependency for Paper Plugins
-    implementation("org.apache.maven.resolver:maven-resolver-connector-basic:1.9.18")
-    implementation("org.apache.maven.resolver:maven-resolver-transport-http:1.9.18")
+    api("org.apache.commons:commons-lang3:3.19.0") // shipped by vanilla; used to come in through the maven resolver
 
     // Annotations - Slowly migrate to jspecify
     val annotations = "org.jetbrains:annotations:$annotationsVersion"
@@ -202,7 +199,6 @@ tasks.withType<Javadoc>().configureEach {
         "https://jd.advntr.dev/text-logger-slf4j/$adventureVersion/",
         "https://www.javadocs.dev/org.slf4j/slf4j-api/$slf4jVersion/",
         "https://logging.apache.org/log4j/2.x/javadoc/log4j-api/",
-        "https://www.javadocs.dev/org.apache.maven.resolver/maven-resolver-api/1.7.3",
     )
     options.tags("apiNote:a:API Note:")
     options.tags("implNote:a:Implementation Note:")

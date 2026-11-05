@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: sioworker <332519909+sioworker@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 22:17:18 +0100
+Subject: [PATCH] Skip density function memo for non-marker nodes
+
+
+diff --git a/net/minecraft/world/level/levelgen/NoiseChunk.java b/net/minecraft/world/level/levelgen/NoiseChunk.java
+index b7f4943b6c862f4b99aa7920af3fc91fc9fd0b76..d6f0568cbb659274ef1023ab455d8f1437ddc09c 100644
+--- a/net/minecraft/world/level/levelgen/NoiseChunk.java
++++ b/net/minecraft/world/level/levelgen/NoiseChunk.java
+@@ -371,6 +371,12 @@ public class NoiseChunk implements DensityFunction.ContextProvider, DensityFunct
+     }
+ 
+     protected DensityFunction wrap(DensityFunction densityFunction) {
++        // Tissue start - only markers need deduplication (equal markers must share one cache); other nodes map to themselves,
++        // so skip the HashMap whose record keys hash/compare whole subtrees on every lookup
++        if (!(densityFunction instanceof DensityFunctions.Marker)) {
++            return this.wrapNew(densityFunction);
++        }
++        // Tissue end
+         return this.wrapped.computeIfAbsent(densityFunction, this::wrapNew);
+     }
+ 

@@ -36,12 +36,14 @@ public final class MoonriseCommon {
     public static final BalancedPrioritisedThreadPool.OrderedStreamGroup SERVER_GROUP = MoonriseCommon.WORKER_POOL.createOrderedStreamGroup();
 
     public static void adjustWorkerThreads(final int configWorkerThreads, final int configIoThreads) {
-        int defaultWorkerThreads = OSNuma.getNativeInstance().getTotalCores()  / 2;
-        if (defaultWorkerThreads <= 4) {
-            defaultWorkerThreads = defaultWorkerThreads <= 3 ? 1 : 2;
-        } else {
-            defaultWorkerThreads = defaultWorkerThreads / 2;
+        // Tissue start - use half the cores for chunk work instead of a quarter; world generation is worker-bound
+        int defaultWorkerThreads = OSNuma.getNativeInstance().getTotalCores() / 2;
+        if (defaultWorkerThreads <= 2) {
+            defaultWorkerThreads = 1;
+        } else if (defaultWorkerThreads <= 4) {
+            defaultWorkerThreads = defaultWorkerThreads - 1;
         }
+        // Tissue end
         defaultWorkerThreads = Integer.getInteger(PlatformHooks.get().getBrand() + ".WorkerThreadCount", Integer.valueOf(defaultWorkerThreads));
 
         int workerThreads = configWorkerThreads;

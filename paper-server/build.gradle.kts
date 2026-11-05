@@ -169,10 +169,6 @@ dependencies {
     mockitoAgent("org.mockito:mockito-core:5.14.1") { isTransitive = false } // Configure mockito agent that is needed in newer java versions
     testImplementation("org.ow2.asm:asm-tree:9.9.1")
     testImplementation("org.junit-pioneer:junit-pioneer:2.2.0") // CartesianTest
-
-    // Spark
-    implementation("me.lucko:spark-api:0.1-20240720.200737-2")
-    implementation("me.lucko:spark-paper:1.10.152")
 }
 
 tasks.jar {

@@ -1,0 +1,92 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: sioworker <332519909+sioworker@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 21:22:23 +0100
+Subject: [PATCH] Remove bundled spark
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index 1b3b5d6c5254edb246031b695218d461933c6d16..d91a5acf039344f33aaf2edd179e9ab244553858 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -634,8 +634,6 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         }
+         // Paper end - Configurable player collision; Handle collideRule team for player collision toggle
+         this.server.enablePlugins(org.bukkit.plugin.PluginLoadOrder.POSTWORLD);
+-        this.server.spark.registerCommandBeforePlugins(this.server); // Paper - spark
+-        this.server.spark.enableAfterPlugins(this.server); // Paper - spark
+         io.papermc.paper.command.brigadier.PaperCommands.INSTANCE.setValid(); // Paper - reset invalid state for event fire below
+         io.papermc.paper.plugin.lifecycle.event.LifecycleEventRunner.INSTANCE.callReloadableRegistrarEvent(io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents.COMMANDS, io.papermc.paper.command.brigadier.PaperCommands.INSTANCE, org.bukkit.plugin.Plugin.class, io.papermc.paper.plugin.lifecycle.event.registrar.ReloadableRegistrarEvent.Cause.INITIAL); // Paper - call commands event for regular plugins
+         this.server.getCommandMap().registerServerAliases(); // Paper - relocate initial CommandMap#registerServerAliases() call
+@@ -1015,7 +1013,6 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         Commands.COMMAND_SENDING_POOL.shutdownNow(); // Paper - Perf: Async command map building; Shutdown and don't bother finishing
+         // CraftBukkit start
+         if (this.server != null) {
+-            this.server.spark.disable(); // Paper - spark
+             this.server.disablePlugins();
+             this.server.waitForAsyncTasksShutdown(); // Paper - Wait for Async Tasks during shutdown
+         }
+@@ -1257,7 +1254,6 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             this.statusIcon = this.loadStatusIcon().orElse(null);
+             this.status = this.buildServerStatus();
+ 
+-            this.server.spark.enableBeforePlugins(); // Paper - spark
+             // Spigot start
+             // Paper start
+             LOGGER.info("Running delayed init tasks");
+@@ -1573,7 +1569,6 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             }
+ 
+             if (this.emptyTicks >= i) {
+-                this.server.spark.tickStart(); // Paper - spark
+                 if (this.emptyTicks == i) {
+                     LOGGER.info("Server empty for {} seconds, pausing", this.pauseWhenEmptySeconds());
+                     this.autoSave();
+@@ -1590,14 +1585,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+                     level.getChunkSource().tick(() -> true, false);
+                 }
+                 // Paper end - avoid issues with certain tasks not processing during sleep
+-                this.server.spark.executeMainThreadTasks(); // Paper - spark
+                 this.tickConnection();
+-                this.server.spark.tickEnd(((double)(System.nanoTime() - this.currentTickStart) / 1000000D)); // Paper - spark
+                 return;
+             }
+         }
+ 
+-        this.server.spark.tickStart(); // Paper - spark
+         new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper - Server Tick Events
+         this.tickCount++;
+         this.tickRateManager.tick();
+@@ -1633,13 +1625,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         // Paper end - Incremental chunk and player saving
+ 
+         ProfilerFiller profilerFiller = Profiler.get();
+-        this.server.spark.executeMainThreadTasks(); // Paper - spark
+         // Paper start - Server Tick Events
+         long endTime = System.nanoTime();
+         long remaining = this.nextTickTimeNanos - endTime;
+         new com.destroystokyo.paper.event.server.ServerTickEndEvent(this.tickCount, ((double)(endTime - this.currentTickStart) / 1000000D), remaining).callEvent();
+         // Paper end - Server Tick Events
+-        this.server.spark.tickEnd(((double)(endTime - this.currentTickStart) / 1000000D)); // Paper - spark
+         profilerFiller.push("tallying");
+         long l = Util.getNanos() - nanos;
+         int i1 = this.tickCount % 100;
+diff --git a/net/minecraft/server/dedicated/DedicatedServer.java b/net/minecraft/server/dedicated/DedicatedServer.java
+index ce78afb0e53ec02ea4c01d86540ceb461d29a5ee..741c2cfad2f3c597ff71b656f1c40758ca3f61ff 100644
+--- a/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -260,7 +260,6 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         this.paperConfigurations.initializeGlobalConfiguration(this.registryAccess());
+         this.paperConfigurations.initializeWorldDefaultsConfiguration(this.registryAccess());
+         // Paper end - initialize global and world-defaults configuration
+-        this.server.spark.enableEarlyIfRequested(); // Paper - spark
+         // Paper start - fix converting txt to json file; convert old users earlier after PlayerList creation but before file load/save
+         if (this.convertOldUsers()) {
+             this.services().nameToIdCache().save(false); // Paper
+@@ -270,7 +269,6 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         org.spigotmc.WatchdogThread.doStart(org.spigotmc.SpigotConfig.timeoutTime, org.spigotmc.SpigotConfig.restartOnCrash); // Paper - start watchdog thread
+         thread.start(); // Paper - Enhance console tab completions for brigadier commands; start console thread after MinecraftServer.console & PaperConfig are initialized
+         io.papermc.paper.command.PaperCommands.registerCommands(this); // Paper - setup /paper command
+-        this.server.spark.registerCommandBeforePlugins(this.server); // Paper - spark
+ 
+         // this.worldData.setGameType(properties.gameMode.get()); // CraftBukkit - moved to world loading
+         LOGGER.info("Default game type: {}", properties.gameMode.get());

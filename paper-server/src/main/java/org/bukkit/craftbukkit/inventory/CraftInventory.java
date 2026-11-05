@@ -25,7 +25,6 @@ import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.entity.SmokerBlockEntity;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.util.CraftLegacy;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
@@ -104,7 +103,6 @@ public class CraftInventory implements Inventory {
     @Override
     public boolean contains(Material material) {
         Preconditions.checkArgument(material != null, "Material cannot be null");
-        material = CraftLegacy.fromLegacy(material);
         for (ItemStack item : this.getStorageContents()) {
             if (item != null && item.getType() == material) {
                 return true;
@@ -129,7 +127,6 @@ public class CraftInventory implements Inventory {
     @Override
     public boolean contains(Material material, int amount) {
         Preconditions.checkArgument(material != null, "Material cannot be null");
-        material = CraftLegacy.fromLegacy(material);
         if (amount <= 0) {
             return true;
         }
@@ -178,7 +175,6 @@ public class CraftInventory implements Inventory {
     @Override
     public HashMap<Integer, ItemStack> all(Material material) {
         Preconditions.checkArgument(material != null, "Material cannot be null");
-        material = CraftLegacy.fromLegacy(material);
         HashMap<Integer, ItemStack> slots = new HashMap<>();
 
         ItemStack[] inventory = this.getStorageContents();
@@ -208,7 +204,6 @@ public class CraftInventory implements Inventory {
     @Override
     public int first(Material material) {
         Preconditions.checkArgument(material != null, "Material cannot be null");
-        material = CraftLegacy.fromLegacy(material);
         ItemStack[] inventory = this.getStorageContents();
         for (int i = 0; i < inventory.length; i++) {
             ItemStack item = inventory[i];
@@ -410,7 +405,6 @@ public class CraftInventory implements Inventory {
     @Override
     public void remove(Material material) {
         Preconditions.checkArgument(material != null, "Material cannot be null");
-        material = CraftLegacy.fromLegacy(material);
         ItemStack[] items = this.getStorageContents();
         for (int i = 0; i < items.length; i++) {
             if (items[i] != null && items[i].getType() == material) {

@@ -74,7 +74,6 @@ import org.bukkit.craftbukkit.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.damage.CraftDamageSourceBuilder;
 import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.craftbukkit.legacy.CraftLegacy;
 import org.bukkit.craftbukkit.legacy.FieldRename;
 import org.bukkit.craftbukkit.potion.CraftPotionType;
 import org.bukkit.damage.DamageSource;
@@ -96,7 +95,6 @@ public final class CraftMagicNumbers implements UnsafeValues {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static final CraftMagicNumbers INSTANCE = new CraftMagicNumbers();
-    public static final boolean DISABLE_OLD_API_SUPPORT = Boolean.getBoolean("paper.disableOldApiSupport"); // Paper
 
 
     private CraftMagicNumbers() {}
@@ -141,23 +139,20 @@ public final class CraftMagicNumbers implements UnsafeValues {
     }
 
     public static BlockState getBlock(Material material, byte data) {
-        return CraftLegacy.fromLegacyData(CraftLegacy.toLegacy(material), data);
+        Block block = CraftMagicNumbers.getBlock(material);
+        return block == null ? null : block.defaultBlockState();
     }
 
     public static MaterialData getMaterial(BlockState data) {
-        return CraftLegacy.toLegacy(CraftMagicNumbers.getMaterial(data.getBlock())).getNewData(CraftMagicNumbers.toLegacyData(data));
+        return new MaterialData(CraftMagicNumbers.getMaterial(data.getBlock()));
     }
 
     public static Item getItem(Material material, short data) {
-        if (material.isLegacy()) {
-            return CraftLegacy.fromLegacyData(CraftLegacy.toLegacy(material), data);
-        }
-
         return CraftMagicNumbers.getItem(material);
     }
 
     public static MaterialData getMaterialData(Item item) {
-        return CraftLegacy.toLegacyData(CraftMagicNumbers.getMaterial(item));
+        return new MaterialData(CraftMagicNumbers.getMaterial(item));
     }
 
     // ========================================================================
@@ -199,44 +194,37 @@ public final class CraftMagicNumbers implements UnsafeValues {
     }
 
     public static Item getItem(Material material) {
-        if (material != null && material.isLegacy()) {
-            material = CraftLegacy.fromLegacy(material);
-        }
-
         return CraftMagicNumbers.MATERIAL_ITEM.get(material);
     }
 
     public static Block getBlock(Material material) {
-        if (material != null && material.isLegacy()) {
-            material = CraftLegacy.fromLegacy(material);
-        }
-
         return CraftMagicNumbers.MATERIAL_BLOCK.get(material);
     }
     // ========================================================================
 
     public static byte toLegacyData(BlockState data) {
-        return CraftLegacy.toLegacyData(data);
+        return 0;
     }
 
     @Override
     public Material toLegacy(Material material) {
-        return CraftLegacy.toLegacy(material);
+        return material;
     }
 
     @Override
     public Material fromLegacy(Material material) {
-        return CraftLegacy.fromLegacy(material);
+        Preconditions.checkArgument(material == null || !material.isLegacy(), "Legacy materials are not supported");
+        return material;
     }
 
     @Override
     public Material fromLegacy(MaterialData material) {
-        return CraftLegacy.fromLegacy(material);
+        return this.fromLegacy(material.getItemType());
     }
 
     @Override
     public Material fromLegacy(MaterialData material, boolean itemPriority) {
-        return CraftLegacy.fromLegacy(material, itemPriority);
+        return this.fromLegacy(material.getItemType());
     }
 
     @Override
@@ -370,12 +358,8 @@ public final class CraftMagicNumbers implements UnsafeValues {
             throw new InvalidPluginException("Plugin API version " + descriptionFile.getAPIVersion() + " is lower than the minimum allowed version. Please update or replace it.");
         }
 
-        if (!DISABLE_OLD_API_SUPPORT && toCheck.isOlderThan(ApiVersion.FLATTENING)) { // Paper
-            CraftLegacy.init();
-        }
-
-        if (toCheck == ApiVersion.NONE) {
-            Bukkit.getLogger().log(Level.WARNING, "Legacy plugin " + descriptionFile.getFullName() + " does not specify an api-version.");
+        if (toCheck.isOlderThan(ApiVersion.FLATTENING)) {
+            throw new InvalidPluginException("Legacy plugins (no api-version or below 1.13) are not supported");
         }
     }
 

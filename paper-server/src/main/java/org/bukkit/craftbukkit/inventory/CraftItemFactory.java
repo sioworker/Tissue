@@ -31,7 +31,6 @@ import org.bukkit.craftbukkit.inventory.components.CraftFoodComponent;
 import org.bukkit.craftbukkit.inventory.components.CraftJukeboxComponent;
 import org.bukkit.craftbukkit.inventory.components.CraftToolComponent;
 import org.bukkit.craftbukkit.inventory.components.CraftUseCooldownComponent;
-import org.bukkit.craftbukkit.util.CraftLegacy;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemFactory;
@@ -68,7 +67,6 @@ public final class CraftItemFactory implements ItemFactory {
 
     @Override
     public boolean isApplicable(ItemMeta meta, Material type) {
-        type = CraftLegacy.fromLegacy(type); // This may be called from legacy item stacks, try to get the right material
         if (type == null || meta == null) {
             return false;
         }
@@ -85,7 +83,6 @@ public final class CraftItemFactory implements ItemFactory {
     }
 
     private ItemMeta getItemMeta(Material material, CraftMetaItem meta) {
-        material = CraftLegacy.fromLegacy(material); // This may be called from legacy item stacks, try to get the right material
 
         if (!material.isItem()) {
             // default behavior for none items is a new CraftMetaItem
